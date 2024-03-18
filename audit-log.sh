@@ -39,3 +39,7 @@ function  check-backlog-limit {
     find /boot -type f -name 'grub.cfg' -exec grep -Ph -- '^\h*linux' {} + | grep -Pv 'audit_backlog_limit=\d+\b'
 }
 
+#Ensure audit log storage size is configured
+function check_log_storage_size {
+    grep -Po -- '^\h*max_log_file\h*=\h*\d+\b' /etc/audit/auditd.conf
+}
