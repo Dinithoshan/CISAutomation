@@ -1,5 +1,5 @@
 #!/bin/bash
-#Author: Dinith  OShan
+#Author: Dinith  Oshan
 #Date: 18 March 2024
 
 #There isn't one size fits all to loggiing solutions and enterprises should use what is feasible for them.
@@ -39,7 +39,23 @@ function  check-backlog-limit {
     find /boot -type f -name 'grub.cfg' -exec grep -Ph -- '^\h*linux' {} + | grep -Pv 'audit_backlog_limit=\d+\b'
 }
 
-#Ensure audit log storage size is configured
-function check_log_storage_size {
+#Ensure Data Retention is configured
+function check-data-retention {
     grep -Po -- '^\h*max_log_file\h*=\h*\d+\b' /etc/audit/auditd.conf
+    grep max_log_file_action /etc/audit/auditd.conf  
+    grep ^space_left_action /etc/audit/auditd.conf
+    grep -E 'admin_space_left_action\s*=\s*(halt|single)' /etc/audit/auditd.conf
+}
+
+#Ensure Changes to the system administration scope (sudoers) is collected (Automated)
+function check-changes-admin-scope {
+
+    # Iterate over files in /etc/audit/rules.d/
+    for file in /etc/audit/rules.d/*.rules; do
+        # Check for relevant rules using awk
+        awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' "$file"
+    done
+
+    auditctl -l | awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)'
+         
 }
