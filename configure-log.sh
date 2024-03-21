@@ -68,3 +68,26 @@ function configure-audit-rules {
         printf "Rebootrequired to load rules\n"; 
     fi
 }
+
+#creating audit rules to configure actions as other user is logged
+function configure-other-user-actions-logged() {
+  # Define the rules
+  rules="# This script creates audit rules for monitoring elevated privileges
+-a always,exit -F arch=b64 -C euid!=uid -F auid!=unset -S execve -k user_emulation
+-a always,exit -F arch=b32 -C euid!=uid -F auid!=unset -S execve -k user_emulation
+  "
+
+  # Create the audit rules file (ensure /etc/audit/rules.d/ exists)
+  sudo mkdir -p /etc/audit/rules.d/
+  sudo echo "$rules" >> /etc/audit/rules.d/50-user_emulation.rules
+
+  # Reload the auditd service to apply the new rules
+  sudo augenrules --load
+
+  echo "Audit rules for monitoring elevated privileges created successfully!"
+}
+
+
+function configure-permission-mode-audit-log-files {
+    find "$(dirname $( awk -F"=" '/^\s*log_file\s*=\s*/ {print $2}'/etc/audit/auditd.conf | xargs))" -type f \( ! -perm 600 -a ! -perm 0400 -a ! -perm 0200 -a ! -perm 0000 -a ! -perm 0640 -a ! -perm 0440 -a ! -perm 0040 \) exec chmod u-x,g-wx,o-rwx {} +
+}
