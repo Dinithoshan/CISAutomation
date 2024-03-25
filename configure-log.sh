@@ -5,6 +5,8 @@
 
 
 
+#Make sure you make a function for sudo augenrules --reload
+
 
 
 
@@ -58,34 +60,98 @@ function set-audit-parameters() {
 
 
 #NEED TO ADD VALIDATION TO HANDLE IF RULES FILE NAME EXISTS.
+#Ensure changes to the system administration scope is collected. - 4.1.3.1
 function configure-audit-rules {
-    printf "
+    rules="# This script creates audit rules for monitoring changes to scope of admins
 -w /etc/sudoers -p wa -k scope
 -w /etc/sudoers.d -p wa -k scope
-" >> /etc/audit/rules.d/50-scope.rules
-    augenrules --load
-    if [[ $(auditctl -s | grep "enabled") =~ "2" ]]; then 
-        printf "Rebootrequired to load rules\n"; 
-    fi
+  "
+  sudo mkdir -p /etc/audit/rules.d/
+  sudo echo "$rules" >> /etc/audit/rules.d/50-scope.rules
+  echo "Audit rules for monitoring changes to scope of admins created successfully!"
 }
 
-#creating audit rules to configure actions as other user is logged
+#creating audit rules to configure actions as other user is logged - 4.1.3.2
 function configure-other-user-actions-logged() {
-  # Define the rules
   rules="# This script creates audit rules for monitoring elevated privileges
 -a always,exit -F arch=b64 -C euid!=uid -F auid!=unset -S execve -k user_emulation
 -a always,exit -F arch=b32 -C euid!=uid -F auid!=unset -S execve -k user_emulation
   "
-
-  # Create the audit rules file (ensure /etc/audit/rules.d/ exists)
   sudo mkdir -p /etc/audit/rules.d/
   sudo echo "$rules" >> /etc/audit/rules.d/50-user_emulation.rules
-
-  # Reload the auditd service to apply the new rules
-  sudo augenrules --load
-
   echo "Audit rules for monitoring elevated privileges created successfully!"
 }
+
+
+#creating audit rules to trigegr when events that modify date/time information are collected. 4.1.3.4
+function configure-other-user-actions-logged() {
+  rules="# This script creates audit rules for events that modify date and time.
+-a always,exit -F arch=b64 -S adjtimex,settimeofday,clock_settime -k time-change
+-a always,exit -F arch=b32 -S adjtimex,settimeofday,clock_settime -k time-change
+-w /etc/localtime -p wa -k time-change
+"
+  sudo mkdir -p /etc/audit/rules.d/
+  sudo echo "$rules" >> /etc/audit/rules.d/50-time-change.rules
+  echo "Audit rules for for events that modify date and time created successfully!"
+}
+
+
+#Creating audit rules to ensure events that modify they system's network environment are collected 4.1.3.5
+function configure-system-network-env {
+    rules="# This script creates audit rules for events that systems network environment
+-a always,exit -F arch=b64 -S sethostname,setdomainname -k system-locale
+-a always,exit -F arch=b32 -S sethostname,setdomainname -k system-locale
+-w /etc/issue -p wa -k system-locale
+-w /etc/issue.net -p wa -k system-locale
+-w /etc/hosts -p wa -k system-locale
+-w /etc/networks -p wa -k system-locale
+-w /etc/network/ -p wa -k system-locale
+"
+  sudo mkdir -p /etc/audit/rules.d/
+  sudo echo "$rules" >> /etc/audit/rules.d/50-system_local.rules
+  echo "Audit rules for for events that modify system's network environment created successfully!"
+}
+
+#Creating audit rule that monitor the use of privileged commands 4.1.3.6
+function configure-privileged-command-logs {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  AUDIT_RULE_FILE="/etc/audit/rules.d/50-privileged.rules"
+  NEW_DATA=()
+  for PARTITION in $(findmnt -n -l -k -it $(awk '/nodev/ { print $2 }' /proc/filesystems | paste -sd,) | grep -Pv "noexec|nosuid" | awk '{print $1}'); do
+    readarray -t DATA < <(find "${PARTITION}" -xdev -perm /6000 -type f | awk -v UID_MIN=${UID_MIN} '{print "-a always,exit -F path=" $1 " -F perm=x -F auid>="UID_MIN" -F auid!=unset -k privileged" }')
+    for ENTRY in "${DATA[@]}"; do
+      NEW_DATA+=("${ENTRY}")
+    done
+  done
+  readarray &> /dev/null -t OLD_DATA < "${AUDIT_RULE_FILE}"
+  COMBINED_DATA=( "${OLD_DATA[@]}" "${NEW_DATA[@]}" )
+  printf '%s\n' "${COMBINED_DATA[@]}" | sort -u > "${AUDIT_RULE_FILE}"
+}
+
+#Configure audit rule that logs file access attempts are collected 4.1.3.7
+function configure-audit-file-access-attempts {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=${UID_MIN} -F auid!=unset -k access
+-a always,exit -F arch=b64 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM -F auid>=${UID_MIN} -F auid!=unset -k access
+-a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EACCES -F auid>=${UID_MIN} -F auid!=unset -k access
+-a always,exit -F arch=b32 -S creat,open,openat,truncate,ftruncate -F exit=-EPERM -F auid>=${UID_MIN} -F auid!=unset -k access" >> /etc/audit/rules.d/50-access.rules || printf "ERROR: Variable 'UID_MIN'is unset. \n"
+}
+
+
+#Configure log that modify user/group information 4.1.3.8
+function configure-audit-modify-user-group-information {
+  rules="# This script creates audit rules for events that modify user/group information
+-w /etc/group -p wa -k identity
+-w /etc/passwd -p wa -k identity
+-w /etc/gshadow -p wa -k identity
+-w /etc/shadow -p wa -k identity
+"
+  sudo mkdir -p /etc/audit/rules.d/
+  sudo echo "$rules" >> /etc/audit/rules.d/50-identity.rules
+  echo "Audit rules for for events that modify user/group information created successfully!"
+}
+
 
 
 function configure-permission-mode-audit-log-files {

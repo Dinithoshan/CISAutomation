@@ -1,26 +1,24 @@
 #!/bin/bash
 
-# auditctl -l | awk '/^ *-a *always,exit/ \
-# &&/ -F *arch=b[2346]{2}/ \
-# &&/ -S/ \
-# &&(/adjtimex/ \
-#     ||/settimeofday/ \
-#     ||/clock_settime/ ) \
-# &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)'
-# auditctl -l | awk '/^ *-w/ \
-# &&/\/etc\/localtime/ \
-# &&/ +-p *wa/ \
-# &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)'
 #!/bin/bash
 
-# Function to check audit rules using grep (for simpler checks)
-check_audit_rules_grep() {
-  file="/home/ubuntu/Desktop/test.rules"
-  if grep -w "ass" $file; then
-    echo "Rule found in $file"
-  else
-    echo "Rule not found in $file"
-  fi
+configure_audit_sudo_log() {
+    local SUDO_LOG_FILE=$(grep -r 'logfile' /etc/sudoers* | sed -e 's/.*logfile=//;s/,? .*//' -e 's/"//g')
+
+    if [ -n "${SUDO_LOG_FILE}" ]; then
+        printf "-w ${SUDO_LOG_FILE} -p wa -k sudo_log_file\n" >> /home/ubuntu/Desktop/50-sudo.rules
+    else
+        printf "ERROR: Variable 'SUDO_LOG_FILE' is unset.\n"
+    fi
 }
 
-check_audit_rules_grep
+# Call the function
+configure_audit_sudo_log
+
+function audit {
+  SUDO_LOG_FILE_ESCAPED=$(grep -r 'logfile' /etc/sudoers* | sed -e 's/.*logfile=//;s/,? .*//' -e 's/"//g' -e 's|/|\\/|g')
+  [ -n "${SUDO_LOG_FILE_ESCAPED}" ] && awk -v pattern="SUDO_LOG_FILE_ESCAPED' is unset.\n"
+}
+
+
+configure_audit_sudo_log
