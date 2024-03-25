@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 configure_audit_sudo_log() {
     local SUDO_LOG_FILE=$(grep -r 'logfile' /etc/sudoers* | sed -e 's/.*logfile=//;s/,? .*//' -e 's/"//g')
 
@@ -21,4 +19,10 @@ function audit {
 }
 
 
-configure_audit_sudo_log
+# configure_audit_sudo_log
+
+function test {
+    grep -w "mounts" /etc/audit/rules.d/*.rules
+}
+
+test

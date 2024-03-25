@@ -2,7 +2,9 @@
 #Author: Dinith Oshan
 #Date: 18/03/2024
 
-
+NO_COLOR='\033[0m'        # No Color
+RED='\033[0;31m'          # Red
+GREEN='\033[0;32m'        # Green
 
 
 #Make sure you make a function for sudo augenrules --reload
@@ -151,6 +153,80 @@ function configure-audit-modify-user-group-information {
   sudo echo "$rules" >> /etc/audit/rules.d/50-identity.rules
   echo "Audit rules for for events that modify user/group information created successfully!"
 }
+
+
+#Configure Discretionary access control permission modification events are collected 4.1.3.9
+function  configure-audit-dac-permission-modification {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F arch=b64 -S chmod,fchmod,fchmodat -F auid>=${UID_MIN} -F auid!=unset -F key=perm_mod
+-a always,exit -F arch=b64 -S chown,fchown,lchown,fchownat -F auid>=${UID_MIN} -F auid!=unset -F key=perm_mod
+-a always,exit -F arch=b32 -S chmod,fchmod,fchmodat -F auid>=${UID_MIN} -F auid!=unset -F key=perm_mod
+-a always,exit -F arch=b32 -S lchown,fchown,chown,fchownat -F auid>=${UID_MIN} -F auid!=unset -F key=perm_mod
+-a always,exit -F arch=b64 -S setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F auid>=${UID_MIN} -F auid!=unset -F key=perm_mod
+-a always,exit -F arch=b32 -S setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr -F auid>=${UID_MIN} -F auid!=unset -F key=perm_mod
+" >> /etc/audit/rules.d/50-perm_mod.rules || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+}
+
+
+
+#Configure Successful fille system mountes are collected 4.1.3.10
+function configure-audit-file-system-mounts {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F arch=b32 -S mount -F auid>=1000 -F auid!=unset -k mounts
+-a always,exit -F arch=b64 -S mount -F auid>=1000 -F auid!=unset -k mounts
+" >> /etc/audit/rules.d/50-mounts.rules || printf "ERROR: Variable 'UID_MIN'
+is unset.\n"
+echo -e "${GREEN} Added audit rule to collect"
+}
+
+#Configure Session initiation information is collected 4.1.3.11
+function configure-audit-session-initiation {
+  printf "
+-w /var/run/utmp -p wa -k session
+-w /var/log/wtmp -p wa -k session
+-w /var/log/btmp -p wa -k session
+" >> /etc/audit/rules.d/50-session.rules
+echo -e "${GREEN} Added audit rule to collect session initiation information ${NO_COLOR}"
+}
+
+#Configure Login and logout events are collected 4.1.3.12
+function configure-audit-login-logout {
+  printf "
+-w /var/log/lastlog -p wa -k logins
+-w /var/run/faillock -p wa -k logins
+" >> /etc/audit/rules.d/50-login.rules
+}
+
+#Configure file deletion events by users are collected 4.1.3.13
+function configure-audit-file-deletion {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F arch=b64 -S rename,unlink,unlinkat,renameat -F auid>=${UID_MIN} -F auid!=unset -F key=delete
+-a always,exit -F arch=b32 -S rename,unlink,unlinkat,renameat -F auid>=${UID_MIN} -F auid!=unset -F key=delete
+  " >> /etc/audit/rules.d/50-delete.rules || printf "ERROR: Variable 'UID_MIN'
+  is unset.\n"
+}
+
+#Configure audit modify systems MAC 4.1.3.14
+function config-audit-modify-mac {
+  printf "
+-w /etc/apparmor/ -p wa -k MAC-policy
+-w /etc/apparmor.d/ -p wa -k MAC-policy
+" >> /etc/audit/rules.d/50-MAC-policy.rules
+}
+
+#Configure audit attempts to use the chcon command 4.1.3.15
+function config-audit-chcon-usage-attempts {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F path=/usr/bin/chcon -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k perm_chng
+" >> /etc/audit/rules.d/50-perm_chng.rules || printf "ERROR: Variable
+  'UID_MIN' is unset.\n"
+}
+
+#Configure audit attempts to use setfacl command  4.1.3.16
 
 
 

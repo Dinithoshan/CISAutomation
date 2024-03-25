@@ -16,13 +16,19 @@ source configure-log.sh
 # check-backlog-limit
 # check-data-retention
 # check-changes-admin-scope #4.1.3.1
-# check-other-user-actions-logged #HAVE A LOOK AT THIS AWK NOT WORKING PROPERLY
+# check-other-user-actions-logged (NOT WORKING)
 # check-changes-to-sudo-log-file
 # check-privileged-commands-logged
 # check-unsuccessful-access-attempt-logged-disk #4.1.3.7
 # check-unsuccessful-access-attempt-logged-running #4.1.3.7
-check-changes-user-group-information #4.1.3.8
-
+# check-changes-user-group-information #4.1.3.8
+# check-changes-dac-permission-moidification #4.1.3.9
+# check-file-system-mounts #4.1.3.10
+# check-audit-session-initiation-information #4.1.3.11
+# check-audit-login-logout #4.1.3.12
+# check-audit-file-deletion #4.1.3.13 (NOT WORKING)
+# check-audit-modify-mac #4.1.3.14
+check-audit-attempts-chcon-use #4.1.3.15 (NOT WORKING)
 
 
 
@@ -44,7 +50,13 @@ check-changes-user-group-information #4.1.3.8
 # configure-privileged-command-logs #4.1.3.6
 # configure-audit-file-access-attempts #4.1.3.7
 # configure-audit-modify-user-group-information  #4.1.3.8
-
+# configure-audit-dac-permission-modification #4.1.3.9
+# configure-audit-file-system-mounts #4.1.3.10
+# configure-audit-session-initiation #4.1.3.11
+# configure-audit-login-logout #4.1.3.12
+# configure-audit-file-deletion #4.1.3.13
+# config-audit-modify-mac #4.1.3.14
+# config-audit-chcon-usage-attempts #4.1.3.15
 
 
 
