@@ -5,7 +5,8 @@
 #There isn't one size fits all to loggiing solutions and enterprises should use what is feasible for them.
 #There is a Disparity with 64 bit and 32 bit systems with arch parameter
 #64 bit OS requires two parameters and 32 bit requires only one.
-
+#4.2.1.6 is skipped due to manually having to check the parameters as per your site policy.
+#4.2.2 is skipped as  journald chosen as logging mechanism. 
 
 
 
@@ -419,4 +420,108 @@ function check-audit-tools-group-root {
 #Ensure cryptographicmechanisms are used to protect the integrity of audit tools 4.1.4.11
 function check-cryptographicmechanisms-audit-tools {
     grep -P -- '(\/sbin\/(audit|au)\H*\b)' /etc/aide/aide.conf
+    #If this command returns anothing then audit is failed.
 }
+
+#Ensure systemd-journal-remote is installed 4.2.1.1.1
+function check-systemd-journal-remote-installed {
+    sudo dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' systemd-journal-remote
+    #Installed should be returned  
+}
+
+#Ensure journald is not configured to recieve logs from a remote client 4.2.1.1.4
+function journald-restrict-remote-logs {
+    systemctl is-enabled systemd-journal-remote.socket
+}
+
+#Ensure journald service is enabled 4.2.1.2
+function check-audit-enable-journald-service {
+    systemctl is-enabled systemd-journald.service
+}
+
+#Ensure journald is configured to compress large log files 4.2.1.3
+function check-audit-journald-compress-check {
+    grep ^\s*Compress /etc/systemd/journald.conf
+}
+
+#Ensure journald is configured to write logfiles to persistent disk 4.2.1.4
+function check-audit-journal-persistent-disk {
+    grep ^\s*Storage /etc/systemd/journald.conf
+}
+
+#Ensure journald is not configured to send logs to rsyslog 4.2.1.5
+function check-audit-journald-not-rsyslog {
+    grep ^\s*ForwardToSyslog /etc/systemd/journald.conf
+}
+
+#Ensure all logfiles have appropriate  permissions and ownership 4.2.3
+#!/usr/bin/env bash
+
+function check_logfiles_permissions_ownership {
+    echo -e "\n- Start check - logfiles have appropriate permissions and ownership"
+    output=""
+    find /var/log -type f | (
+        while read -r fname; do
+            bname="$(basename "$fname")"
+            case "$bname" in
+                lastlog | lastlog.* | wtmp | wtmp.* | btmp | btmp.*)
+                    if ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,2,4,6][0,4]\h*$'; then
+                        output="$output\n- File: \"$fname\" mode: \"$(stat -Lc "%a" "$fname")\"\n"
+                    fi
+                    if ! stat -Lc "%U %G" "$fname" | grep -Pq -- '^\h*root\h+(utmp|root)\h*$'; then
+                        output="$output\n- File: \"$fname\" ownership: \"$(stat -Lc "%U:%G" "$fname")\"\n"
+                    fi
+                    ;;
+                secure | auth.log)
+                    if ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,4]0\h*$'; then
+                        output="$output\n- File: \"$fname\" mode: \"$(stat -Lc "%a" "$fname")\"\n"
+                    fi
+                    if ! stat -Lc "%U %G" "$fname" | grep -Pq -- '^\h*(syslog|root)\h+(adm|root)\h*$'; then
+                        output="$output\n- File: \"$fname\" ownership: \"$(stat -Lc "%U:%G" "$fname")\"\n"
+                    fi
+                    ;;
+                SSSD | sssd)
+                    if ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,2,4,6]0\h*$'; then
+                        output="$output\n- File: \"$fname\" mode: \"$(stat -Lc "%a" "$fname")\"\n"
+                    fi
+                    if ! stat -Lc "%U %G" "$fname" | grep -Piq -- '^\h*(SSSD|root)\h+(SSSD|root)\h*$'; then
+                        output="$output\n- File: \"$fname\" ownership: \"$(stat -Lc "%U:%G" "$fname")\"\n"
+                    fi
+                    ;;
+                gdm | gdm3)
+                    if ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,2,4,6]0\h*$'; then
+                        output="$output\n- File: \"$fname\" mode: \"$(stat -Lc "%a" "$fname")\"\n"
+                    fi
+                    if ! stat -Lc "%U %G" "$fname" | grep -Pq -- '^\h*(root)\h+(gdm3?|root)\h*$'; then
+                        output="$output\n- File: \"$fname\" ownership: \"$(stat -Lc "%U:%G" "$fname")\"\n"
+                    fi
+                    ;;
+                *.journal)
+                    if ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,4]0\h*$'; then
+                        output="$output\n- File: \"$fname\" mode: \"$(stat -Lc "%a" "$fname")\"\n"
+                    fi
+                    if ! stat -Lc "%U %G" "$fname" | grep -Pq -- '^\h*(root)\h+(systemd-journal|root)\h*$'; then
+                        output="$output\n- File: \"$fname\" ownership: \"$(stat -Lc "%U:%G" "$fname")\"\n"
+                    fi
+                    ;;
+                *)
+                    if ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,4]0\h*$'; then
+                        output="$output\n- File: \"$fname\" mode: \"$(stat -Lc "%a" "$fname")\"\n"
+                    fi
+                    if ! stat -Lc "%U %G" "$fname" | grep -Pq -- '^\h*(syslog|root)\h+(adm|root)\h*$'; then
+                        output="$output\n- File: \"$fname\" ownership: \"$(stat -Lc "%U:%G" "$fname")\"\n"
+                    fi
+                    ;;
+            esac
+        done
+        # If all files passed, then we pass
+        if [ -z "$output" ]; then
+            echo -e "\n- PASS\n- All files in \"/var/log/\" have appropriate permissions and ownership\n"
+        else
+            # print the reason why we are failing
+            echo -e "\n- FAIL:\n$output"
+        fi
+        echo -e "- End check - logfiles have appropriate permissions and ownership\n"
+    )
+}
+

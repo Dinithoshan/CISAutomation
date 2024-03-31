@@ -46,7 +46,15 @@ source configure-log.sh
 # check-audit-audit-tools-restrictive #4.1.4.8
 # check-audit-tools-owned-root #4.1.4.9
 # check-audit-tools-group-root #4.1.4.10
-check-cryptographicmechanisms-audit-tools
+# check-cryptographicmechanisms-audit-tools #4.1.4.11
+# check-systemd-journal-remote-installed #4.2.1.1.1
+# journald-restrict-remote-logs #4.2.1.1.4
+# check-audit-enable-journald-service #4.2.1.2
+# check-audit-journald-compress-check #4.2.1.3
+# check-audit-journal-persistent-disk #4.2.1.4
+# check-audit-journald-not-rsyslog #4.2.1.5
+check_logfiles_permissions_ownership #4.2.3
+
 
 
 
@@ -84,3 +92,10 @@ check-cryptographicmechanisms-audit-tools
 # config-restriction-audit-tools #4.1.4.8
 # configure-audit-tools-owned-root #4.1.4.9
 # configure-audit-tools-group-root #4.1.4.10
+# configure-cryptographic-mechanisms-audit-tools #4.1.4.11
+# install-systemd-journal-remote #4.2.1.1.1
+# config-reject-remote-logs-journald #4.2.1.1.4
+# config-compress-large-log-files #4.2.1.3
+# config-journald-write-persistant-disk #4.2.1.4
+# config-journald-restrict-sending-to-rsyslog #4.2.1.5
+# remediate_logfiles_permissions_ownership #4.2.3

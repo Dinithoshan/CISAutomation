@@ -7,11 +7,6 @@ RED='\033[0;31m'          # Red
 GREEN='\033[0;32m'        # Green
 
 
-#Make sure you make a function for sudo augenrules --reload
-
-
-
-
 #Install, enable and start auditd
 function configure-auditd {
     echo 'Installing and configuring auditd'
@@ -375,4 +370,96 @@ function configure-audit-tools-owned-root {
 function configure-audit-tools-group-root {
   chmod go-w /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules
   chown root:root /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules
+}
+
+#Configure Crptographic mechanisms used to protect Integrit of audit tools 4.1.4.11
+function configure-cryptographic-mechanisms-audit-tools {
+  rules="/sbin/auditctl p+i+n+u+g+s+b+acl+xattrs+sha512
+/sbin/auditd p+i+n+u+g+s+b+acl+xattrs+sha512
+/sbin/ausearch p+i+n+u+g+s+b+acl+xattrs+sha512
+/sbin/aureport p+i+n+u+g+s+b+acl+xattrs+sha512
+/sbin/autrace p+i+n+u+g+s+b+acl+xattrs+sha512
+/sbin/augenrules p+i+n+u+g+s+b+acl+xattrs+sha512"
+  sudo echo "$rules" >> /etc/aide/aide.conf
+  echo "Cryptographic mechanisms used to protect integrity created successfully!"
+} 
+
+
+#configure systemd-journal-remote instal{lation 4.2.1.1.1
+function install-systemd-journal-remote {
+  sudo apt install systemd-journal-remote
+}
+
+#configure journald to reject receiving logs from remote clients 4.2.1.1.4
+function config-reject-remote-logs-journald {
+  systemctl --now disable systemd-journal-remote.socket
+}
+
+#Configure journald to compress large log files 4.2.1.3
+function config-compress-large-log-files {
+  rules="Compress=yes"
+  sudo echo "$rules" >> /etc/systemd/journald.conf
+  echo "Journald Log file compress enabled successfully!"
+}
+  
+#configure journald  writes to persistant disk 4.2.1.4
+function config-journald-write-persistant-disk {
+  rules="Storage=persistent"
+  sudo echo "$rules" >> /etc/systemd/journald.conf
+  echo "Journald Log file writes to persistent disk enabled successfully!"
+}
+
+#Config restrict sending logs to rsyslog from journald 4.2.1.5
+function config-journald-restrict-sending-to-rsyslog {
+  JOURNALD_CONF="/etc/systemd/journald.conf"
+  if grep -q "ForwardToSyslog=yes" "$JOURNALD_CONF"; then
+    # Remove the line from the file
+    sed -i '/ForwardToSyslog=yes/d' "$JOURNALD_CONF"
+    echo "ForwardToSyslog=yes removed from $JOURNALD_CONF"
+  else
+      echo "ForwardToSyslog=yes not found in $JOURNALD_CONF"
+  fi
+  systemctl restart systemd-journald
+}
+
+#!/usr/bin/env bash
+
+remediate_logfiles_permissions_ownership() {
+    echo -e "\n- Start remediation - logfiles have appropriate permissions and ownership"
+    find /var/log -type f | while read -r fname; do
+        bname="$(basename "$fname")"
+        case "$bname" in
+            lastlog | lastlog.* | wtmp | wtmp.* | btmp | btmp.*)
+                ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,2,4,6][0,4]\h*$' && echo -e "- changing mode on \"$fname\"" && chmod ug-x,o-wx "$fname"
+                ! stat -Lc "%U" "$fname" | grep -Pq -- '^\h*root\h*$' && echo -e "- changing owner on \"$fname\"" && chown root "$fname"
+                ! stat -Lc "%G" "$fname" | grep -Pq -- '^\h*(utmp|root)\h*$' && echo -e "- changing group on \"$fname\"" && chgrp root "$fname"
+                ;;
+            secure | auth.log)
+                ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,4]0\h*$' && echo -e "- changing mode on \"$fname\"" && chmod u-x,g-wx,o-rwx "$fname"
+                ! stat -Lc "%U" "$fname" | grep -Pq -- '^\h*(syslog|root)\h*$' && echo -e "- changing owner on \"$fname\"" && chown root "$fname"
+                ! stat -Lc "%G" "$fname" | grep -Pq -- '^\h*(adm|root)\h*$' && echo -e "- changing group on \"$fname\"" && chgrp root "$fname"
+                ;;
+            SSSD | sssd)
+                ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,2,4,6]0\h*$' && echo -e "- changing mode on \"$fname\"" && chmod ug-x,o-rwx "$fname"
+                ! stat -Lc "%U" "$fname" | grep -Piq -- '^\h*(SSSD|root)\h*$' && echo -e "- changing owner on \"$fname\"" && chown root "$fname"
+                ! stat -Lc "%G" "$fname" | grep -Piq -- '^\h*(SSSD|root)\h*$' && echo -e "- changing group on \"$fname\"" && chgrp root "$fname"
+                ;;
+            gdm | gdm3)
+                ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,2,4,6]0\h*$' && echo -e "- changing mode on \"$fname\"" && chmod ug-x,o-rwx "$fname"
+                ! stat -Lc "%U" "$fname" | grep -Pq -- '^\h*root\h*$' && echo -e "- changing owner on \"$fname\"" && chown root "$fname"
+                ! stat -Lc "%G" "$fname" | grep -Pq -- '^\h*(gdm3?|root)\h*$' && echo -e "- changing group on \"$fname\"" && chgrp root "$fname"
+                ;;
+            *.journal)
+                ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,4]0\h*$' && echo -e "- changing mode on \"$fname\"" && chmod u-x,g-wx,o-rwx "$fname"
+                ! stat -Lc "%U" "$fname" | grep -Pq -- '^\h*root\h*$' && echo -e "- changing owner on \"$fname\"" && chown root "$fname"
+                ! stat -Lc "%G" "$fname" | grep -Pq -- '^\h*(systemd-journal|root)\h*$' && echo -e "- changing group on \"$fname\"" && chgrp root "$fname"
+                ;;
+            *)
+                ! stat -Lc "%a" "$fname" | grep -Pq -- '^\h*[0,2,4,6][0,4]0\h*$' && echo -e "- changing mode on \"$fname\"" && chmod u-x,g-wx,o-rwx "$fname"
+                ! stat -Lc "%U" "$fname" | grep -Pq -- '^\h*(syslog|root)\h*$' && echo -e "- changing owner on \"$fname\"" && chown root "$fname"
+                ! stat -Lc "%G" "$fname" | grep -Pq -- '^\h*(adm|root)\h*$' && echo -e "- changing group on \"$fname\"" && chgrp root "$fname"
+                ;;
+        esac
+    done
+    echo -e "- End remediation - logfiles have appropriate permissions and ownership\n"
 }
