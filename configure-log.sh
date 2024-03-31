@@ -227,9 +227,152 @@ function config-audit-chcon-usage-attempts {
 }
 
 #Configure audit attempts to use setfacl command  4.1.3.16
+function config-audit-setfacl-usage-attempts {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F path=/usr/bin/setfacl -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k perm_chng
+" >> /etc/audit/rules.d/50-priv_cmd.rules || printf "ERROR: Variable
+'UID_MIN' is unset.\n"
+}
 
 
+#Configure audit attempts to use the chacl command are recorded 4.1.3.17
+function config-audit-chacl-usage-attempts {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F path=/usr/bin/chacl -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k perm_chng
+" >> /etc/audit/rules.d/50-perm_chng.rules || printf "ERROR: Variable
+  'UID_MIN' is unset.\n"
+}
 
-function configure-permission-mode-audit-log-files {
-    find "$(dirname $( awk -F"=" '/^\s*log_file\s*=\s*/ {print $2}'/etc/audit/auditd.conf | xargs))" -type f \( ! -perm 600 -a ! -perm 0400 -a ! -perm 0200 -a ! -perm 0000 -a ! -perm 0640 -a ! -perm 0440 -a ! -perm 0040 \) exec chmod u-x,g-wx,o-rwx {} +
+#Configure audit attempts to use the usermod command are recorded 4.1.3.18
+function config-audit-usermod-usage-attempts {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F path=/usr/sbin/usermod -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k usermod
+" >> /etc/audit/rules.d/50-usermod.rules || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+}
+
+#Configure audit kernal module loading unloading and modification 4.1.3.19
+function config-audit-kernel-module-changes {
+  UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+  [ -n "${UID_MIN}" ] && printf "
+-a always,exit -F arch=b64 -S init_module,finit_module,delete_module,create_module,query_module -F auid>=${UID_MIN} -F auid!=unset -k kernel_modules
+-a always,exit -F path=/usr/bin/kmod -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k kernel_modules
+" >> /etc/audit/rules.d/50-kernel_modules.rules || printf "ERROR: Variable
+'UID_MIN' is unset.\n"
+}
+
+#Configure audit rules are immutable 4.1.3.20
+function config-audit-immutable {
+  printf -- "-e 2
+" >> /etc/audit/rules.d/99-finalize.rules
+}
+
+#Configure audit rules both running and onn disk rules are the same 4.1.3.21
+function config-audit-running-ondisk {
+  augenrules --load
+}
+
+
+#Configure audit log files permission mode 4.1.4.1
+function config-permission-log-files {
+    log_file_path=$(grep -E "^log_file\s*=" /etc/audit/auditd.conf | awk -F "=" '{print $2}' | tr -d ' ')
+
+    if [ -n "$log_file_path" ]; then
+        log_file_dir=$(dirname "$log_file_path")
+        while IFS= read -r line; do
+            file=$(echo "$line" | awk '{print $1}')
+            permissions=$(echo "$line" | awk '{print $2}')
+            if [ "$permissions" -gt 640 ]; then
+                echo "Adjusting permissions of $file to 640"
+                chmod 640 "$file"
+            fi
+        done < <(stat -Lc "%n %a" "$log_file_dir"/*)
+    else
+        echo "Log file path not found in auditd.conf"
+    fi
+
+}
+
+
+#configure audit log files owner as root 4.1.4.2
+function config-audit-log-file-owner {
+    log_file_path=$(grep -E "^log_file\s*=" /etc/audit/auditd.conf | awk -F "=" '{print $2}' | tr -d ' ')
+
+    if [ -n "$log_file_path" ]; then
+        log_file_dir=$(dirname "$log_file_path")
+        while IFS= read -r line; do
+            file=$(echo "$line" | awk '{print $1}')
+            owner=$(echo "$line" | awk '{print $2}')
+            if [ "$owner" != "root" ]; then
+                echo "Adjusting owner of $file to root"
+                chown root "$file"
+            fi
+        done < <(stat -Lc "%n %U" "$log_file_dir"/*)
+    else
+        echo "Log file path not found in auditd.conf"
+    fi
+}
+
+#configure audit to check audit group ownership 4.1.4.3
+function config-audit-group-ownership {
+
+    log_file_path=$(grep -E "^log_file\s*=" /etc/audit/auditd.conf | awk -F "=" '{print $2}' | tr -d ' ')
+    sed -ri 's/^\s*#?\s*log_group\s*=\s*\S+(\s*#.*)?.*$/log_group = adm\1/' /etc/audit/auditd.conf
+    if [ -n "$log_file_path" ]; then
+        log_file_dir=$(dirname "$log_file_path")
+        find "$log_file_dir" -type f \( ! -group adm -a ! -group root \) -exec chgrp adm {} +
+    else
+        echo "Log file path not found in auditd.conf"
+    fi
+    chgrp adm /var/log/audit
+    systemctl restart auditd
+}
+
+
+#configure audit to check permissions of the log directory 4.1.4.4
+function config-audit-log-directory-restriction {
+  log_file_path=$(grep -E "^\s*log_file\s*=" /etc/audit/auditd.conf | cut -d "=" -f 2 | tr -d ' ')
+  if [ -n "$log_file_path" ]; then
+        # Extract the directory containing the log file
+        log_file_dir=$(dirname "$log_file_path")
+
+        # Get permissions of the directory
+        chmod g-w,o-rwx "$log_file_dir"
+    else
+        echo "Log file path not found in auditd.conf"
+    fi
+}
+
+#Configure audit to check permissions of the configuration files 4.1.4.5
+function config-audit-config-file {
+  find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) -exec chmod u-x,g-wx,o-rwx {} +
+}
+
+
+#configure audit to check configuration files are owned by root 4.1.4.6
+function config-audit-config-files-owned-by-root {
+  find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -user root -exec chown root {} +
+}
+
+#configure audit to check coinfiguration files are owned by group root 4.1.4.7
+function config-audit-config-files-owned-group-root {
+  find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -group root -exec chgrp root {} +
+}
+
+#Configure audit tools are 755 or more restrictive 4.1.4.8
+function  config-restriction-audit-tools {
+  chmod go-w /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules
+}
+
+#configure audit tools owned by root 4.1.4.9
+function configure-audit-tools-owned-root {
+  chown root /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules
+}
+
+#Configure audit tools are owned by group root 4.1.4.10 
+function configure-audit-tools-group-root {
+  chmod go-w /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules
+  chown root:root /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules
 }

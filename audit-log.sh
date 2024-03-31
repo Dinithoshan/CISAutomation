@@ -265,22 +265,158 @@ function check-audit-attempts-chcon-use {
     'UID_MIN' is unset.\n"
 }
 
+#Ensure Successful and unsuccessful attempts to use the setfacl command are recorded 4.1.3.16
+function check-audit-attempts-setfacl-usage {
+    UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+    [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
+    &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
+    &&/ -F *auid>=${UID_MIN}/ \
+    &&/ -F *perm=x/ \
+    &&/ -F *path=\/usr\/bin\/setfacl/ \
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
+    || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+}
+
+#Ensure successful and unsuccessful attempts to use chacl command are recorded 4.1.3.17
+function check-audit-attempts-chacl-usage {
+    UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+    [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
+    &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
+    &&/ -F *auid>=${UID_MIN}/ \
+    &&/ -F *perm=x/ \
+    &&/ -F *path=\/usr\/bin\/chacl/ \
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
+    || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+}
+
+#Ensure successful and unsuccesful attempts to use the usermod command are recorded 4.1.3.18
+function check-audit-attempts-usermod-usage {
+    UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+    [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
+    &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
+    &&/ -F *auid>=${UID_MIN}/ \
+    &&/ -F *perm=x/ \
+    &&/ -F *path=\/usr\/sbin\/usermod/ \
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
+    || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+}
+
+#Ensure kernal module loading unloading and modification is collected 4.1.3.19
+function check-audit-kernal-changes {
+    awk '/^ *-a *always,exit/ \
+        &&/ -F *arch=b[2346]{2}/ \
+        &&(/ -F auid!=unset/||/ -F auid!=-1/||/ -F auid!=4294967295/) \
+        &&/ -S/ \
+        &&(/init_module/ \
+            ||/finit_module/ \
+            ||/delete_module/ \
+            ||/create_module/ \
+            ||/query_module/) \
+        &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules
+
+    # UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+    # [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
+    # &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
+    # &&/ -F *auid>=${UID_MIN}/ \
+    # &&/ -F *perm=x/ \
+    # &&/ -F *path=\/usr\/bin\/kmod/ \
+    # &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
+    # || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+}
 
 
+#Ensure the audit configurationis immutable 4.1.3.20
+function check-audit-immutable {
+    grep -Ph -- '^\h*-e\h+2\b' /etc/audit/rules.d/*.rules | tail -1
+}
+
+#Ensure the running and on disk configuiration is the same 4.1.3.21
+function check-audit-running-ondisk {
+    augenrules --check
+}
 
 
+#Ensure audit log files are mode 0640 or less permissive (Automated) 4.1.4.1 (EXTERNAL)
+function check-audit-log-file-permission {
+    log_file_path=$(grep -E "^log_file\s*=" /etc/audit/auditd.conf | awk -F "=" '{print $2}' | tr -d ' ')
 
-########MAKE SURE YOU DO CONFIGURING AUDITD RULES
-########REST OF THE WORK STARTING FROM PAGE 531
-
-#Ensure audit log files are mode 0640 or less permissive (Automated)
-function check-log-files-less-permissive {
-    output=$(stat -Lc "%n %a" " $(dirname $( awk -F"=" '/^\s*log_file\s*=\s*/ {print $2}' /etc/audit/auditd.conf | xargs))"/* | grep -v '[0,2,4,6][0,4]0')
-    echo $output                            
-    if [ -z "$output" ]
-    then
-        echo "Log files more permissive than 0640: AUDIT Failed"
+    if [ -n "$log_file_path" ]; then
+        log_file_dir=$(dirname "$log_file_path")
+        stat -Lc "%n %a" "$log_file_dir"/*
     else
-        echo "Log files more permissive than 0640: AUDIT Passed"
+        echo "Log file path not found in auditd.conf"
     fi
+}
+
+
+#Ensure only authorized users own audit log files 4.1.4.2 (EXTERNAL)
+function check-audit-log-file-ownership {
+    log_file_path=$(grep -E "^log_file\s*=" /etc/audit/auditd.conf | awk -F "=" '{print $2}' | tr -d ' ')
+
+    if [ -n "$log_file_path" ]; then
+        log_file_dir=$(dirname "$log_file_path")
+        stat -Lc "%n %U" "$log_file_dir"/*
+    else
+        echo "Log file path not found in auditd.conf"
+    fi
+}
+
+#Ensure only authorized groups are assigned ownership of audit log files 4.1.4.3
+function check-audit-group-ownership {
+    grep -Piw -- '^\h*log_group\h*=\h*(adm|root)\b' /etc/audit/auditd.conf
+}
+
+
+#Ensure the audit log directory is 0750 or more restrictive 4.1.4.4
+function check-audit-log-directory-restricted {
+    # Extract the log file path from auditd.conf using grep
+    log_file_path=$(grep -E "^\s*log_file\s*=" /etc/audit/auditd.conf | cut -d "=" -f 2 | tr -d ' ')
+
+    if [ -n "$log_file_path" ]; then
+        # Extract the directory containing the log file
+        log_file_dir=$(dirname "$log_file_path")
+
+        # Get permissions of the directory
+        stat -Lc "%n %a" "$log_file_dir"
+    else
+        echo "Log file path not found in auditd.conf"
+    fi
+}
+
+
+#Ensure audit configuration filesa re 640 or more restrictive 4.1.4.5
+function check-audit-config-file-restrictions {
+    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) -exec stat -Lc "%n %a" {} + | grep -Pv -- '^\h*\H+\h*([0,2,4,6][0,4]0)\h*$'
+}
+
+
+
+#Ensure audit configuration files are owned by root 4.1.4.6
+function check-audit-config-owned-by-root {
+    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -user root
+}
+
+#Ensure audit configuration files belong to greoup root 4.1.4.7
+function check-audit-config-file-group-root {
+    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -group root
+}
+
+#Ensure audit tools are 577 or more restrictive 4.1.4.8
+function check-audit-audit-tools-restrictive {
+    stat -c "%n %a" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+([0-7][0,1,4,5][0,1,4,5])\h*$'
+}
+
+#Ensure audit tools are owned by root 4.1.4.9
+function check-audit-tools-owned-root {
+    stat -c "%n %U" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+root\h*$'
+}
+
+#Ensure audit tools belong to group root 4.1.4.10
+function check-audit-tools-group-root {
+    stat -c "%n %a %U %G" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+([0-7][0,1,4,5][0,1,4,5])\h+root\h+root\h*$'
+}
+
+#Ensure cryptographicmechanisms are used to protect the integrity of audit tools 4.1.4.11
+function check-cryptographicmechanisms-audit-tools {
+    grep -P -- '(\/sbin\/(audit|au)\H*\b)' /etc/aide/aide.conf
 }

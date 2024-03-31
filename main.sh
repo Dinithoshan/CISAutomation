@@ -8,7 +8,8 @@ source audit-log.sh
 source configure-log.sh   
 
  
-#Importing the Audit Functions
+#####Importing the Audit Functions#####
+
 # verify-auditd-installed #4.1.1.1
 # verify-auditd-enabled
 # verify-auditd-active
@@ -28,19 +29,29 @@ source configure-log.sh
 # check-audit-login-logout #4.1.3.12
 # check-audit-file-deletion #4.1.3.13 (NOT WORKING)
 # check-audit-modify-mac #4.1.3.14
-check-audit-attempts-chcon-use #4.1.3.15 (NOT WORKING)
+# check-audit-attempts-chcon-use #4.1.3.15 (NOT WORKING)
+# check-audit-attempts-setfacl-usage #4.1.3.16
+# check-audit-attempts-chacl-usage #4.1.3.17
+# check-audit-attempts-usermod-usage #4.1.3.18
+# check-audit-kernal-changes #4.1.3.19 (1 RULE NOT WORKING)
+# check-audit-immutable #4.1.3.20
+# check-audit-running-ondisk #4.1.3.21
+# check-audit-log-file-permission #4.1.4.1
+# check-audit-log-file-ownership #4.1.4.2
+# check-audit-group-ownership #4.1.4.3
+# check-audit-log-directory-restricted #4.1.4.4
+# check-audit-config-file-restrictions #4.1.4.5
+# check-audit-config-owned-by-root #4.1.4.6
+# check-audit-config-file-group-root #4.1.4.7
+# check-audit-audit-tools-restrictive #4.1.4.8
+# check-audit-tools-owned-root #4.1.4.9
+# check-audit-tools-group-root #4.1.4.10
+check-cryptographicmechanisms-audit-tools
 
 
 
-# check-log-files-less-permissive
+#####Importing configure scripts#####
 
-
-
-
-
-
-
-#Importing configure scripts
 # configure-auditd            
 # add_grub_options
 # set_max_log_file
@@ -57,9 +68,19 @@ check-audit-attempts-chcon-use #4.1.3.15 (NOT WORKING)
 # configure-audit-file-deletion #4.1.3.13
 # config-audit-modify-mac #4.1.3.14
 # config-audit-chcon-usage-attempts #4.1.3.15
-
-
-
-
-
-# configure-permission-mode-audit-log-files 
+# config-audit-setfacl-usage-attempts #4.1.3.16
+# config-audit-chacl-usage-attempts #4.1.3.17
+# config-audit-usermod-usage-attempts #4.1.3.18
+# config-audit-kernel-module-changes #4.1.3.19
+# config-audit-immutable #4.1.3.20
+# config-audit-running-ondisk #4.1.3.21
+# config-permission-log-files #4.1.4.1
+# config-audit-log-file-owner #4.1.4.2
+# config-audit-group-ownership #4.1.4.3
+# config-audit-log-directory-restriction #4.1.4.4
+# config-audit-config-file #4.1.4.5
+# config-audit-config-files-owned-by-root #4.1.4.6
+# config-audit-config-files-owned-group-root #4.1.4.7
+# config-restriction-audit-tools #4.1.4.8
+# configure-audit-tools-owned-root #4.1.4.9
+# configure-audit-tools-group-root #4.1.4.10
