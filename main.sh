@@ -10,16 +10,23 @@ source configure-log.sh
  
 #####Importing the Audit Functions#####
 
+
+
+
 # verify-auditd-installed #4.1.1.1
 # verify-auditd-enabled
 # verify-auditd-active
 # find-grub2
 # check-backlog-limit
-# check-data-retention
+# check-data-retention #4.1.2
 # check-changes-admin-scope #4.1.3.1
 # check-other-user-actions-logged (NOT WORKING)
-# check-changes-to-sudo-log-file
-# check-privileged-commands-logged
+# check-changes-to-sudo-log-file #4.1.3.3
+# check-events-modify-date-time-info #4.1.3.4
+# check-privileged-commands-logged #4.1.3.6 has to be checked manually
+
+
+
 # check-unsuccessful-access-attempt-logged-disk #4.1.3.7
 # check-unsuccessful-access-attempt-logged-running #4.1.3.7
 # check-changes-user-group-information #4.1.3.8
@@ -53,7 +60,7 @@ source configure-log.sh
 # check-audit-journald-compress-check #4.2.1.3
 # check-audit-journal-persistent-disk #4.2.1.4
 # check-audit-journald-not-rsyslog #4.2.1.5
-check_logfiles_permissions_ownership #4.2.3
+# check_logfiles_permissions_ownership #4.2.3
 
 
 
@@ -62,12 +69,12 @@ check_logfiles_permissions_ownership #4.2.3
 
 # configure-auditd            
 # add_grub_options
-# set_max_log_file
 # set_audit_parameters
 # configure-audit-rules
-# configure-other-user-actions-logged
+# configure-changes-sudo-log-file #4.1.3.3
+# configure-modify-datetime-logged #4.1.3.4
 # configure-privileged-command-logs #4.1.3.6
-# configure-audit-file-access-attempts #4.1.3.7
+configure-audit-file-access-attempts #4.1.3.7
 # configure-audit-modify-user-group-information  #4.1.3.8
 # configure-audit-dac-permission-modification #4.1.3.9
 # configure-audit-file-system-mounts #4.1.3.10

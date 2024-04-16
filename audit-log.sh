@@ -14,21 +14,44 @@
 ## Ensure Auditing is enabled.
 #Ensure auditd is installed (Automated) 4.1.1.1
 function verify-auditd-installed {
-    dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n'auditd audispd-plugins
+    dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' auditd audispd-plugins >> temp.txt
+    output=$(grep -e "audispd-plugins[[:space:]]install ok installed[[:space:]]installed" temp.txt)
+    if [ -n "$output" ]; then
+        echo "Audit Passed: Auditd insalled"
+    else
+        echo "Audit failed: Auditd is not installed"
+    fi
+    rm temp.txt
 }
+
 
 #Ensure auditd service is enabled(Automated) 4.1.1.2
 function verify-auditd-enabled {
-    output=$(systemctl is-enabled auditd)
-    echo $output
+    systemctl is-enabled auditd >> temp.txt
+    output=$(grep -e "enabled" temp.txt)
+    if [ -n "$output" ]; then
+        echo "Audit Passed: Auditd enabled"
+    else
+        echo "Audit failed: Auditd is not enabled"
+    fi
+    rm temp.txt
 }
 
 #Ensure auditd service is active (Autmated) 4.1.1.2
 function verify-auditd-active {
-    output=$(systemctl is-active auditd)
-    echo 'auditd service: '$output
+    systemctl is-active auditd >> temp.txt
+    output=$(grep -e "active" temp.txt)
+    if [ -n "$output" ]; then
+        echo "Audit Passed: Auditd active"
+    else
+        echo "Audit failed: Auditd is not active"
+    fi    
+    rm temp.txt
 }
 
+
+
+#NOT WORKING - ISSUE WITH BOOTLOADER
 #Ensure aduditing for processes that start prior to auditd is enabled [grub2] (Automated)4.1.1.3
 function find-grub2 {
     find /boot -type f -name 'grub.cfg' -exec grep -Ph -- '^\h*linux' {} + | grep -v 'audit=1'
@@ -39,12 +62,26 @@ function check-backlog-limit {
     find /boot -type f -name 'grub.cfg' -exec grep -Ph -- '^\h*linux' {} + | grep -Pv 'audit_backlog_limit=\d+\b'
 }
 
-#Ensure Data Retention is configured
+
+
+
+
+#Ensure Data Retention is configured 4.1.2
 function check-data-retention {
-    grep -Po -- '^\h*max_log_file\h*=\h*\d+\b' /etc/audit/auditd.conf #4.1.2.1
-    grep max_log_file_action /etc/audit/auditd.conf #4.1.2.2
-    grep ^space_left_action /etc/audit/auditd.conf #4.1.2.3
-    grep -E 'admin_space_left_action\s*=\s*(halt|single)' /etc/audit/auditd.conf #4.1.2.3
+    grep -Po -- '^\h*max_log_file\h*=\h*\d+\b' /etc/audit/auditd.conf >> temp.txt #4.1.2.1
+    grep max_log_file_action /etc/audit/auditd.conf >> temp.txt #4.1.2.2
+    grep ^space_left_action /etc/audit/auditd.conf >> temp.txt  #4.1.2.3
+    grep -E 'admin_space_left_action\s*=\s*(halt|single)' /etc/audit/auditd.conf >> temp.txt #4.1.2.3
+
+    if [[ $(grep -E '^max_log_file\s*=\s*8' temp.txt) && \
+      $(grep -E '^max_log_file_action\s*=\s*keep_logs' temp.txt) && \
+      $(grep -E '^space_left_action\s*=\s*email' temp.txt) && \
+      $(grep -E '^admin_space_left_action\s*=\s*halt' temp.txt) ]]; then
+        echo "Audit passed: Auditd Data retention configured"
+    else
+        echo "Audit Failed: Auditd Data retention not configured"
+    fi
+
 }
 
 #Ensure Changes to the system administration scope (sudoers) is collected (Automated) - 4.1.3.1
@@ -53,12 +90,19 @@ function check-changes-admin-scope {
     # Iterate over files in /etc/audit/rules.d/
     for file in /etc/audit/rules.d/*.rules; do
         # Check for relevant rules using awk
-        awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' "$file"
+        awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' "$file" >> temp.txt
     done
 
-    auditctl -l | awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)'
+    auditctl -l | awk '/^ *-w/ && /\/etc\/sudoers/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' >> temp.txt
     
+    if [[ $(grep -E '^-w /etc/sudoers -p wa -k scope' temp.txt) && \
+        $(grep -E '^-w /etc/sudoers.d -p wa -k scope' temp.txt) ]]; then
+        echo "Audit Passed: Changes to admin scope is logged"
+    else
+        echo "Audit Failed: Changes to admin scope is not logged"
+    fi
 
+    rm temp.txt
 }
 
 
@@ -89,12 +133,26 @@ function check-other-user-actions-logged {
 #Ensure events that modify the sudo log file are collected (Automated)
 function check-changes-to-sudo-log-file {
     
-    SUDO_LOG_FILE_ESCAPED=$(  | sed -e 's/.*logfile=//;s/,? .*//' -e 's/"//g' -e 's|/|\\/|g')
-    [ -n "${SUDO_LOG_FILE_ESCAPED}" ] && awk "/^ *-w/ \
-    &&/"${SUDO_LOG_FILE_ESCAPED}"/ \
-    &&/ +-p *wa/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
-    || printf "ERROR: Variable 'SUDO_LOG_FILE_ESCAPED' is unset.\n"
+    # SUDO_LOG_FILE_ESCAPED=$(  | sed -e 's/.*logfile=//;s/,? .*//' -e 's/"//g' -e 's|/|\\/|g')
+    # [ -n "${SUDO_LOG_FILE_ESCAPED}" ] && awk "/^ *-w/ \
+    # &&/"${SUDO_LOG_FILE_ESCAPED}"/ \
+    # &&/ +-p *wa/ \
+    # &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
+    # || printf "ERROR: Variable 'SUDO_LOG_FILE_ESCAPED' is unset.\n"
+    local SUDO_LOG_FILE_ESCAPED=$(grep -oP 'logfile=\K[^,]*' /etc/sudoers | sed -e 's/"//g' -e 's|/|\\/|g')
+    if [ -n "${SUDO_LOG_FILE_ESCAPED}" ]; then
+        awk '/^ *-w/ && /'"${SUDO_LOG_FILE_ESCAPED}"'/ && / +-p *wa/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+    else
+        printf "ERROR: Variable 'SUDO_LOG_FILE_ESCAPED' is unset.\n"
+    fi
+
+    if [ -s "temp.txt" ]; then
+        echo "Audit Passed: Changes to sudo log file is logged"
+    else
+        echo "Audit Failed: Changes to sudo log file are not logged"
+    fi
+
+    rm temp.txt
 
 }
 
@@ -108,14 +166,21 @@ function check-events-modify-date-time-info {
     &&(/adjtimex/ \
         ||/settimeofday/ \
         ||/clock_settime/ ) \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
     awk '/^ *-w/ \
     &&/\/etc\/localtime/ \
     &&/ +-p *wa/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+
+
+    if [ -s "temp.txt" ]; then
+        echo "Audit Passed: Events that modify date/time are logged"
+    else
+        echo "Audit Failed: Events that modify Date/time are not logged"
+    fi
 }
 
-#Ensure use of privileghed commands are collected 4.1.3.6
+#Ensure use of privileged commands are collected 4.1.3.6
 function check-privileged-commands-logged {
     for PARTITION in $(findmnt -n -l -k -it $(awk '/nodev/ { print $2 }' /proc/filesystems | paste -sd,) | grep -Pv "noexec|nosuid" | awk '{print $1}'); do
         for PRIVILEGED in $(find "${PARTITION}" -xdev -perm /6000 -type f); do

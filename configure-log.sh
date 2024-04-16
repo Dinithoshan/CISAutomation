@@ -11,11 +11,11 @@ GREEN='\033[0;32m'        # Green
 function configure-auditd {
     echo 'Installing and configuring auditd'
     apt install auditd audispd-plugins
-    systemctl --now enable auditd
+#     systemctl --now enable auditd
 }
 
 # Add options to GRUB_CMDLINE_LINUX
-function add-grub-options() {
+function add_grub_options() {
     echo 'Adding Grub Options'
     options="audit=1 audit_backlog_limit=8192"
 
@@ -27,12 +27,15 @@ function add-grub-options() {
         # If not defined, create a new line with options
         sudo bash -c "echo 'GRUB_CMDLINE_LINUX=\"$options\"' >> /etc/default/grub"
     fi
+
+    update-grub
+
 }
 
 #Ensure audit log storage size is configured
 #max_log_file should be set as site policy (Default value is 8) This value is sufficient for an endpoint workstation
 
-function set-audit-parameters() {
+function set_audit_parameters() {
     # Set max_log_file_action parameter
     sudo sed -i "s/^max_log_file_action =.*/max_log_file_action = keep_logs/" /etc/audit/auditd.conf
     echo "max_log_file_action set to 'keep_logs' in /etc/audit/auditd.conf"
@@ -80,8 +83,30 @@ function configure-other-user-actions-logged() {
 }
 
 
+#creating audit rules to configure actions as other user is logged - 4.1.3.3
+# function configure-changes-sudo-log-file{
+#   SUDO_LOG_FILE=$(grep -r logfile /etc/sudoers* | sed -e 's/.*logfile=//;s/,?.*//' -e 's/"//g')
+# [ -n "${SUDO_LOG_FILE}" ] && printf "
+# -w ${SUDO_LOG_FILE} -p wa -k sudo_log_file
+# " >> /etc/audit/rules.d/50-sudo.rules || printf "ERROR: Variable
+# 'SUDO_LOG_FILE_ESCAPED' is unset.\n"
+# }
+
+function configure-changes-sudo-log-file {
+    local SUDO_LOG_FILE=$(grep -r logfile /etc/sudoers* | sed -e 's/.*logfile=//;s/,?.*//' -e 's/"//g')
+    
+    if [ -n "${SUDO_LOG_FILE}" ]; then
+        printf "
+-w ${SUDO_LOG_FILE} -p wa -k sudo_log_file
+" >> /etc/audit/rules.d/50-sudo.rules
+    else
+        printf "ERROR: Variable 'SUDO_LOG_FILE' is unset.\n"
+    fi
+}
+
+
 #creating audit rules to trigegr when events that modify date/time information are collected. 4.1.3.4
-function configure-other-user-actions-logged() {
+function configure-modify-datetime-logged() {
   rules="# This script creates audit rules for events that modify date and time.
 -a always,exit -F arch=b64 -S adjtimex,settimeofday,clock_settime -k time-change
 -a always,exit -F arch=b32 -S adjtimex,settimeofday,clock_settime -k time-change
