@@ -23,13 +23,18 @@ source configure-log.sh
 # check-other-user-actions-logged (NOT WORKING)
 # check-changes-to-sudo-log-file #4.1.3.3
 # check-events-modify-date-time-info #4.1.3.4
+
+
+
 # check-privileged-commands-logged #4.1.3.6 has to be checked manually
 
 
-
+#NOT WORKING
 # check-unsuccessful-access-attempt-logged-disk #4.1.3.7
 # check-unsuccessful-access-attempt-logged-running #4.1.3.7
-# check-changes-user-group-information #4.1.3.8
+
+
+check-changes-user-group-information #4.1.3.8
 # check-changes-dac-permission-moidification #4.1.3.9
 # check-file-system-mounts #4.1.3.10
 # check-audit-session-initiation-information #4.1.3.11
@@ -74,7 +79,7 @@ source configure-log.sh
 # configure-changes-sudo-log-file #4.1.3.3
 # configure-modify-datetime-logged #4.1.3.4
 # configure-privileged-command-logs #4.1.3.6
-configure-audit-file-access-attempts #4.1.3.7
+# configure-audit-file-access-attempts #4.1.3.7
 # configure-audit-modify-user-group-information  #4.1.3.8
 # configure-audit-dac-permission-modification #4.1.3.9
 # configure-audit-file-system-mounts #4.1.3.10
