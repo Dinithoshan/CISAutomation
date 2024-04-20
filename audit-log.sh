@@ -227,30 +227,45 @@ function check-unsuccessful-access-attempt-logged-running {
 
 #Ensure events that modify user/group information are collected (Automated) 4.1.3.8
 function check-changes-user-group-information {
-    output= awk '/^ *-w/ \
+    awk '/^ *-w/ \
     &&(/\/etc\/group/ \
         ||/\/etc\/passwd/ \
         ||/\/etc\/gshadow/ \
         ||/\/etc\/shadow/ \
         ||/\/etc\/security\/opasswd/) \
     &&/ +-p *wa/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
 
-    output2= auditctl -l | awk '/^ *-w/ \
-    &&(/\/etc\/group/ \
-        ||/\/etc\/passwd/ \
-        ||/\/etc\/gshadow/ \
-        ||/\/etc\/shadow/ \
-        ||/\/etc\/security\/opasswd/) \
-    &&/ +-p *wa/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)'
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: Events that modify user/group information are logged"
+    else
+        echo "Audit Failed: Events that modify user/group information are not logged"
+    fi
 
-    echo "Disk Rules: $output"
-    echo "Running Configuration: $output2"
+    rm temp.txt
 }
 
-#Check DAC permission modification events are colelcted 4.1.3.9 - Not COnfiguration Working Audit not working.
-function check-changes-dac-permission-moidification {
+function check-changes-user-group-information-running {
+    auditctl -l | awk '/^ *-w/ \
+    &&(/\/etc\/group/ \
+        ||/\/etc\/passwd/ \
+        ||/\/etc\/gshadow/ \
+        ||/\/etc\/shadow/ \
+        ||/\/etc\/security\/opasswd/) \
+    &&/ +-p *wa/ \
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' >> temp.txt
+
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: Events that modify user/group information are logged (Disk)"
+    else
+        echo "Audit Failed: Events that modify user/group information are not logged (Running)"
+    fi
+
+    rm temp.txt
+}
+
+#Check DAC permission modification events are collected 4.1.3.9 - Not COnfiguration Working Audit not working.
+function check-changes-dac-permission-modification {
     UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
     [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
     &&/ -F *arch=b[2346]{2}/ \
@@ -267,17 +282,26 @@ function check-changes-dac-permission-moidification {
 
 
 #Ensure successful file system mounts are collected 4.1.3.10
-function check-file-system-mounts {
+function check-file-system-mounts() {
+
     UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
-    [ -n "${UID_MIN}" ] && auditctl -l | awk "/^ *-a *always,exit/ \
-    &&/ -F *arch=b[2346]{2}/ \
-    &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
-    &&/ -F *auid>=${UID_MIN}/ \
-    &&/ -S/ \
-    &&/mount/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" \
-    || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+    if [ -n "${UID_MIN}" ]; then
+        awk '/-a always,exit/ && /-F arch=b[32|64]/ && (/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) && / -F auid>='"${UID_MIN}"'/ && / -S/ && /mount/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/50-mounts.rules >> temp.txt
+    else
+        echo "ERROR: Variable 'UID_MIN' is unset."
+    fi
+
+
+    if [ -s temp.txt]; then
+        echo "Audit passed: File system mounts are logged"
+    else
+        echo "Audit Failede: File system mounts are not logged"
+    fi
+
+    rm temp.txt
+
 }
+
 
 #Ensure session initiation information is collected
 function check-audit-session-initiation-information {
@@ -286,7 +310,15 @@ function check-audit-session-initiation-information {
         ||/\/var\/log\/wtmp/ \
         ||/\/var\/log\/btmp/) \
     &&/ +-p *wa/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+
+    if [ -s temp.txt ]; then
+        echo "Audit passed: Session initiation information are logged"
+    else
+        echo "Audit Failed: Session initiation information are not logged"
+    fi 
+
+    rm temp.txt
 }
 
 #Ensure login and logout events are collected 4.1.3.12
@@ -295,22 +327,36 @@ function check-audit-login-logout {
     &&(/\/var\/log\/lastlog/ \
         ||/\/var\/run\/faillock/) \
     &&/ +-p *wa/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+
+    if [ -s temp.txt]; then
+        echo "Audit passed: Login logout are logged"
+    else
+        echo "Audit Failed: login logout are not logged"
+    fi
+
+    rm temp.txt
 }
 
 
 #Ensure file deletion events by users aere collected 4.1.3.13
-function check-audit-file-deletion {
+function check-audit-file-deletion() {
     UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
-    [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
-    &&/ -F *arch=b[2346]{2}/ \
-    &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
-    &&/ -F *auid>=${UID_MIN}/ \
-    &&/ -S/ \
-    &&(/unlink/||/rename/||/unlinkat/||/renameat/) \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
-    || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+    if [ -n "${UID_MIN}" ]; then
+        awk '/-a always,exit/ && /-F arch=b[32|64]/ && (/ -F auid!=unset/ || / -F auid!=-1/ || / -F auid!=4294967295/) && / -F auid>='"${UID_MIN}"'/ && / -S/ && (/unlink/ ||    /rename/ || /unlinkat/ || /renameat/) && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+    else
+        echo "ERROR: Variable 'UID_MIN' is unset."
+    fi
+
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: File deletion is logged"
+    else
+        echo "Audit Failed: File deletion is not logged"
+    fi
+    
+    rm temp.txt
 }
+
 
 #Ensure events that modify the system's mandatory access controls are collected 4.1.3.14
 function check-audit-modify-mac {
@@ -318,82 +364,148 @@ function check-audit-modify-mac {
     &&(/\/etc\/apparmor/ \
         ||/\/etc\/apparmor.d/) \
     &&/ +-p *wa/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+
+    if [ -s temp.txt ]; then
+        echo "Audit passed: Changes to mandatory Access controls are logged"
+    else 
+        echo "Audit Failed: Changes to mandatory access controls are not logged"
+    fi 
+
+    rm temp.txt
+
 }
 
-#Ensure successful and unsuccessful attempts to ise the chcon command are recorded 4.1.3.15
+#Ensure successful and unsuccessful attempts to use the chcon command are recorded 4.1.3.15
 function check-audit-attempts-chcon-use {
     UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
-    [ -n "${UID_MIN}" ] && printf "
-    -a always,exit -F path=/usr/bin/chcon -F perm=x -F auid>=${UID_MIN} -F
-    auid!=unset -k perm_chng
-    " >> /etc/audit/rules.d/50-perm_chng.rules || printf "ERROR: Variable
-    'UID_MIN' is unset.\n"
+    if [ -n "${UID_MIN}" ]; then
+        awk '/-a always,exit/ && (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) && / -F *auid>='"${UID_MIN}"'/ && / -F *perm=x/ && / -F *path=\/usr\/bin\/chcon/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+    else
+        echo "ERROR: Variable 'UID_MIN' is unset."
+    fi
+
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: chcon usage attempts are logged"
+    else
+        echo "Audit Failed: chcon usage attempts are not logged"
+    fi
+
+    rm temp.txt
+
+}
+#Ensure Successful and unsuccessful attempts to use the setfacl command are recorded 4.1.3.16
+function check-audit-attempts-setfacl-usage() {
+    UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+    if [ -n "${UID_MIN}" ]; then
+        awk '/-a always,exit/ && (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) && / -F *auid>='"${UID_MIN}"'/ && / -F *perm=x/ && / -F *path=\/usr\/bin\/setfacl/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+    else
+        echo "ERROR: Variable 'UID_MIN' is unset."
+    fi
+
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: setfacl usage is logged"
+    else
+        echo "Audit Failed: setfacl usage is not logged"
+    fi
+
+    rm temp.txt
 }
 
-#Ensure Successful and unsuccessful attempts to use the setfacl command are recorded 4.1.3.16
-function check-audit-attempts-setfacl-usage {
-    UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
-    [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
-    &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
-    &&/ -F *auid>=${UID_MIN}/ \
-    &&/ -F *perm=x/ \
-    &&/ -F *path=\/usr\/bin\/setfacl/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
-    || printf "ERROR: Variable 'UID_MIN' is unset.\n"
-}
 
 #Ensure successful and unsuccessful attempts to use chacl command are recorded 4.1.3.17
-function check-audit-attempts-chacl-usage {
+function check-audit-attempts-chacl-usage() {
     UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
-    [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
-    &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
-    &&/ -F *auid>=${UID_MIN}/ \
-    &&/ -F *perm=x/ \
-    &&/ -F *path=\/usr\/bin\/chacl/ \
-    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
-    || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+    if [ -n "${UID_MIN}" ]; then
+        awk '/-a always,exit/ && (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) && / -F *auid>='"${UID_MIN}"'/ && / -F *perm=x/ && / -F *path=\/usr\/bin\/chacl/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+    else
+        echo "ERROR: Variable 'UID_MIN' is unset."
+    fi
+
+    if [ -s temp.txt ]; then
+        echo "Audit passed: chacl usage is logged"
+    else
+        echo "Audit failed: chacl usage is not logged"
+    fi
+
+    rm temp.txt
 }
+
 
 #Ensure successful and unsuccesful attempts to use the usermod command are recorded 4.1.3.18
 function check-audit-attempts-usermod-usage {
     UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
+    if [ -n "${UID_MIN}" ]; then
+        awk '/-a always,exit/ && (/ -F *auid!=unset/ || / -F *auid!=-1/ || / -F *auid!=4294967295/) && / -F *auid>='"${UID_MIN}"'/ && / -F *perm=x/ && / -F *path=\/usr\/sbin\/usermod/ && (/ key= *[!-~]* *$/ || / -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules > temp.txt
+    else
+        echo "ERROR: Variable 'UID_MIN' is unset."
+    fi
+
+    if [ -s temp.txt ]; then
+        echo "Audit passed: usermod usage are being recorded"
+    else
+        echo "Audit failed: usermod command is not being recorded"
+    fi
+
+    rm temp.txt
+}
+
+
+#Ensure kernal module loading unloading and modification is collected 4.1.3.19
+function check-audit-kernel-changes-1 {
+    
+    awk '/^ *-a *always,exit/ \
+    &&/ -F *arch=b(32|64)/ \
+    &&(/ -F auid!=unset/||/ -F auid!=-1/||/ -F auid!=4294967295/) \
+    &&/ -S/ \
+    &&(/init_module/ \
+    ||/finit_module/ \
+    ||/delete_module/) \
+    &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
+
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: system calls related to kernel modules are logged"
+    else
+        echo "Audit Failed: system calls related to kernel modules are not logged"
+    fi
+
+    rm temp.txt
+}
+
+#Ensure kernal module loading unloading and modification is collected 4.1.3.19
+function check-audit-kernel-changes-2 {
+
+    UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
     [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
     &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
     &&/ -F *auid>=${UID_MIN}/ \
     &&/ -F *perm=x/ \
-    &&/ -F *path=\/usr\/sbin\/usermod/ \
+    &&/ -F *path=\/usr\/bin\/kmod/ \
     &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
-    || printf "ERROR: Variable 'UID_MIN' is unset.\n"
-}
+    >> temp.txt || printf "ERROR: Variable 'UID_MIN' is unset.\n"
 
-#Ensure kernal module loading unloading and modification is collected 4.1.3.19
-function check-audit-kernal-changes {
-    awk '/^ *-a *always,exit/ \
-        &&/ -F *arch=b[2346]{2}/ \
-        &&(/ -F auid!=unset/||/ -F auid!=-1/||/ -F auid!=4294967295/) \
-        &&/ -S/ \
-        &&(/init_module/ \
-            ||/finit_module/ \
-            ||/delete_module/ \
-            ||/create_module/ \
-            ||/query_module/) \
-        &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: kmod command usage is logged"
+    else
+        echo "Audit Failed: kmod command usage is not logged"
+    fi
 
-    # UID_MIN=$(awk '/^\s*UID_MIN/{print $2}' /etc/login.defs)
-    # [ -n "${UID_MIN}" ] && awk "/^ *-a *always,exit/ \
-    # &&(/ -F *auid!=unset/||/ -F *auid!=-1/||/ -F *auid!=4294967295/) \
-    # &&/ -F *auid>=${UID_MIN}/ \
-    # &&/ -F *perm=x/ \
-    # &&/ -F *path=\/usr\/bin\/kmod/ \
-    # &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)" /etc/audit/rules.d/*.rules \
-    # || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+    rm temp.txt
 }
 
 
 #Ensure the audit configurationis immutable 4.1.3.20
 function check-audit-immutable {
-    grep -Ph -- '^\h*-e\h+2\b' /etc/audit/rules.d/*.rules | tail -1
+    grep -Ph -- '^\h*-e\h+2\b' /etc/audit/rules.d/*.rules | tail -1 >> temp.txt
+
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: Auditd immutable"
+    else
+        echo "Audit Failed: Auditd not immutable"
+    fi
+
+    rm temp.txt
+
 }
 
 #Ensure the running and on disk configuiration is the same 4.1.3.21

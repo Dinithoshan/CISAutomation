@@ -218,6 +218,7 @@ function configure-audit-login-logout {
 -w /var/log/lastlog -p wa -k logins
 -w /var/run/faillock -p wa -k logins
 " >> /etc/audit/rules.d/50-login.rules
+echo -e "${GREEN} Added audit rule to collect login logout information ${NO_COLOR}"
 }
 
 #Configure file deletion events by users are collected 4.1.3.13
@@ -228,6 +229,8 @@ function configure-audit-file-deletion {
 -a always,exit -F arch=b32 -S rename,unlink,unlinkat,renameat -F auid>=${UID_MIN} -F auid!=unset -F key=delete
   " >> /etc/audit/rules.d/50-delete.rules || printf "ERROR: Variable 'UID_MIN'
   is unset.\n"
+
+echo -e "${GREEN} Added audit rule to collect information about file deletion."
 }
 
 #Configure audit modify systems MAC 4.1.3.14
@@ -236,6 +239,7 @@ function config-audit-modify-mac {
 -w /etc/apparmor/ -p wa -k MAC-policy
 -w /etc/apparmor.d/ -p wa -k MAC-policy
 " >> /etc/audit/rules.d/50-MAC-policy.rules
+echo -e "${GREEN} Added audit rule to collect information about Mandatory Access Control modifications"
 }
 
 #Configure audit attempts to use the chcon command 4.1.3.15
@@ -245,6 +249,7 @@ function config-audit-chcon-usage-attempts {
 -a always,exit -F path=/usr/bin/chcon -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k perm_chng
 " >> /etc/audit/rules.d/50-perm_chng.rules || printf "ERROR: Variable
   'UID_MIN' is unset.\n"
+  echo -e "${GREEN} Added audit rule to collect information about chcon usage attempts."
 }
 
 #Configure audit attempts to use setfacl command  4.1.3.16
@@ -254,6 +259,8 @@ function config-audit-setfacl-usage-attempts {
 -a always,exit -F path=/usr/bin/setfacl -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k perm_chng
 " >> /etc/audit/rules.d/50-priv_cmd.rules || printf "ERROR: Variable
 'UID_MIN' is unset.\n"
+
+echo -e "${GREEN} Added audit rule to collect information about setfacl usage attempts."
 }
 
 
@@ -264,6 +271,8 @@ function config-audit-chacl-usage-attempts {
 -a always,exit -F path=/usr/bin/chacl -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k perm_chng
 " >> /etc/audit/rules.d/50-perm_chng.rules || printf "ERROR: Variable
   'UID_MIN' is unset.\n"
+  
+  echo -e "${GREEN} Added audit rule to collect information about chacl usage attempts."
 }
 
 #Configure audit attempts to use the usermod command are recorded 4.1.3.18
@@ -272,6 +281,7 @@ function config-audit-usermod-usage-attempts {
   [ -n "${UID_MIN}" ] && printf "
 -a always,exit -F path=/usr/sbin/usermod -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k usermod
 " >> /etc/audit/rules.d/50-usermod.rules || printf "ERROR: Variable 'UID_MIN' is unset.\n"
+echo -e "${GREEN} Added audit rule to collect information about usermod usage attempts."
 }
 
 #Configure audit kernal module loading unloading and modification 4.1.3.19
@@ -282,12 +292,14 @@ function config-audit-kernel-module-changes {
 -a always,exit -F path=/usr/bin/kmod -F perm=x -F auid>=${UID_MIN} -F auid!=unset -k kernel_modules
 " >> /etc/audit/rules.d/50-kernel_modules.rules || printf "ERROR: Variable
 'UID_MIN' is unset.\n"
+echo -e "${GREEN} Added audit rule to collect information about kernal module changes."
 }
 
 #Configure audit rules are immutable 4.1.3.20
 function config-audit-immutable {
   printf -- "-e 2
 " >> /etc/audit/rules.d/99-finalize.rules
+echo -e "${GREEN} Added audit rule to finalize auditd setup."
 }
 
 #Configure audit rules both running and onn disk rules are the same 4.1.3.21
