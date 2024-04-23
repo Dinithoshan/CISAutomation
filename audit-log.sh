@@ -15,11 +15,13 @@
 #Ensure auditd is installed (Automated) 4.1.1.1
 function verify-auditd-installed {
     dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' auditd audispd-plugins >> temp.txt
-    output=$(grep -e "audispd-plugins[[:space:]]install ok installed[[:space:]]installed" temp.txt)
-    if [ -n "$output" ]; then
-        echo "Audit Passed: Auditd insalled"
+    search_string="auditd	install ok installed	installed"
+    file="temp.txt"
+    file_content=$(<"$file")
+    if [[ "$file_content" == *"$search_string"* ]];then
+        echo "Audit Passed: Auditd is installed"
     else
-        echo "Audit failed: Auditd is not installed"
+        echo "Audit Failed: Auditd is not installed"
     fi
     rm temp.txt
 }
@@ -52,7 +54,7 @@ function verify-auditd-active {
 
 
 #NOT WORKING - ISSUE WITH BOOTLOADER
-#Ensure aduditing for processes that start prior to auditd is enabled [grub2] (Automated)4.1.1.3
+#Ensure auditing for processes that start prior to auditd is enabled [grub2] (Automated)4.1.1.3
 function find-grub2 {
     find /boot -type f -name 'grub.cfg' -exec grep -Ph -- '^\h*linux' {} + | grep -v 'audit=1'
 }
@@ -520,10 +522,27 @@ function check-audit-log-file-permission {
 
     if [ -n "$log_file_path" ]; then
         log_file_dir=$(dirname "$log_file_path")
-        stat -Lc "%n %a" "$log_file_dir"/*
+        stat -Lc "%n %a" "$log_file_dir"/* >> temp.txt
     else
         echo "Log file path not found in auditd.conf"
     fi
+
+    local audit_fail=false
+    while IFS= read -r line; do
+        last_three_digits=$(echo "$line" | grep -oE '[0-9]{3}$')
+        if [ "$last_three_digits" -gt 640 ]; then
+            audit_fail=true
+            break
+        fi
+    done < "temp.txt"
+
+    if [ "$audit_fail" = true ]; then
+        echo "Audit fail: Some files have permissions greater than 640"
+    else
+        echo "Audit passed: All files have permissions 640 or less permissive"
+    fi
+
+    rm temp.txt
 }
 
 
@@ -533,102 +552,237 @@ function check-audit-log-file-ownership {
 
     if [ -n "$log_file_path" ]; then
         log_file_dir=$(dirname "$log_file_path")
-        stat -Lc "%n %U" "$log_file_dir"/*
+        stat -Lc "%n %U" "$log_file_dir"/* >> temp.txt
     else
         echo "Log file path not found in auditd.conf"
     fi
+
+    local audit_fail=false
+    while IFS= read -r line; do
+        owner=$(echo "$line" | awk '{print $2}')
+        if [ "$owner" != "root" ]; then
+            audit_fail=true
+            break
+        fi
+    done < "temp.txt"
+
+    if [ "$audit_fail" = true ]; then
+        echo "Audit fail: Some files are not owned by root user"
+    else
+        echo "Audit passed: All files are owned by root user"
+    fi
+
+    rm temp.txt
+
 }
+
 
 #Ensure only authorized groups are assigned ownership of audit log files 4.1.4.3
 function check-audit-group-ownership {
-    grep -Piw -- '^\h*log_group\h*=\h*(adm|root)\b' /etc/audit/auditd.conf
+    grep -Piw -- '^\h*log_group\h*=\h*(adm|root)\b' /etc/audit/auditd.conf >> temp.txt
+
+    local audit_fail=false
+    while IFS= read -r line; do
+        if [[ "$line" == *adm ]]; then
+            audit_fail=true
+            break
+        fi
+    done < "temp.txt"
+
+    if [ "$audit_fail" = true ]; then
+        echo "Audit passed: Log group owned by admin"
+    else
+        echo "Audit Failed: Log group not owned by admin"
+    fi
+
+    rm temp.txt
 }
+
 
 
 #Ensure the audit log directory is 0750 or more restrictive 4.1.4.4
 function check-audit-log-directory-restricted {
-    # Extract the log file path from auditd.conf using grep
     log_file_path=$(grep -E "^\s*log_file\s*=" /etc/audit/auditd.conf | cut -d "=" -f 2 | tr -d ' ')
 
     if [ -n "$log_file_path" ]; then
-        # Extract the directory containing the log file
         log_file_dir=$(dirname "$log_file_path")
 
-        # Get permissions of the directory
-        stat -Lc "%n %a" "$log_file_dir"
+        permissions=$(stat -Lc "%a" "$log_file_dir")
+        
+        if [ "$permissions" -ge 750 ]; then
+            echo "Audit passed: Log directory permissions are 750 or more restrictive"
+        else
+            echo "Audit fail: Log directory permissions are less than 750"
+        fi
     else
         echo "Log file path not found in auditd.conf"
     fi
 }
 
 
+
 #Ensure audit configuration filesa re 640 or more restrictive 4.1.4.5
 function check-audit-config-file-restrictions {
-    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) -exec stat -Lc "%n %a" {} + | grep -Pv -- '^\h*\H+\h*([0,2,4,6][0,4]0)\h*$'
+    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) -exec stat -Lc "%n %a" {} + | grep -Pv -- '^\h*\H+\h*([0,2,4,6][0,4]0)\h*$' >> temp.txt
+    if [ -s temp.txt ]; then
+        echo "Audit Failed: log configuration files are not restrictive"
+    else
+        echo "Audit Passed: log configuration files are restrictive"
+    fi
+    rm temp.txt
 }
 
 
 
 #Ensure audit configuration files are owned by root 4.1.4.6
 function check-audit-config-owned-by-root {
-    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -user root
+    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -user root >> temp.txt
+
+    if [ -s temp.txt ]; then
+        echo "Audit Failed: log configuration files are not owned by root"
+    else
+        echo "Audit Passed: log configuration files are owned by root"
+    fi
+
+    rm temp.txt
 }
 
 #Ensure audit configuration files belong to greoup root 4.1.4.7
 function check-audit-config-file-group-root {
-    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -group root
+    find /etc/audit/ -type f \( -name '*.conf' -o -name '*.rules' \) ! -group root >> temp.txt
+    if [ -s temp.txt ]; then
+        echo "Audit Failed: audit configuration files are not owned by root"
+    else
+        echo "Audit Passed: audit configuration files are owned by root"
+    fi
+
+    rm temp.txt
 }
 
 #Ensure audit tools are 577 or more restrictive 4.1.4.8
 function check-audit-audit-tools-restrictive {
-    stat -c "%n %a" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+([0-7][0,1,4,5][0,1,4,5])\h*$'
+    stat -c "%n %a" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+([0-7][0,1,4,5][0,1,4,5])\h*$' >> temp.txt
+    if [ -s temp.txt ]; then
+        echo "Audit Failed: audit tools are not restrictive"
+    else
+        echo "Audit Passed: audit tools are restrictive"
+    fi
+    rm temp.txt
 }
 
 #Ensure audit tools are owned by root 4.1.4.9
 function check-audit-tools-owned-root {
-    stat -c "%n %U" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+root\h*$'
+    stat -c "%n %U" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+root\h*$' >> temp.txt
+    if [ -s temp.txt ]; then
+        echo "Audit Failed: audit tools are not owned by root"
+    else
+        echo "Audit Passed: audit tools are owned by root"
+    fi
+    rm temp.txt
 }
 
 #Ensure audit tools belong to group root 4.1.4.10
 function check-audit-tools-group-root {
-    stat -c "%n %a %U %G" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+([0-7][0,1,4,5][0,1,4,5])\h+root\h+root\h*$'
+    stat -c "%n %a %U %G" /sbin/auditctl /sbin/aureport /sbin/ausearch /sbin/autrace /sbin/auditd /sbin/augenrules | grep -Pv -- '^\h*\H+\h+([0-7][0,1,4,5][0,1,4,5])\h+root\h+root\h*$' >> temp.txt
+    if [ -s temp.txt ]; then
+        echo "Audit Failed: audit tools does not belong to group root"
+    else
+        echo "Audit Passed: audit tools are owned by group root"
+    fi
+    rm temp.txt
 }
 
 #Ensure cryptographicmechanisms are used to protect the integrity of audit tools 4.1.4.11
 function check-cryptographicmechanisms-audit-tools {
-    grep -P -- '(\/sbin\/(audit|au)\H*\b)' /etc/aide/aide.conf
-    #If this command returns anothing then audit is failed.
+    grep -P -- '(\/sbin\/(audit|au)\H*\b)' /etc/aide/aide.conf >> temp.txt
+    if [ -s temp.txt ]; then
+        echo "Audit Passed: cryptography used to protect integrity of logs"
+    else
+        echo "Audit Failed: cryptography not used to protect integrity of logs"
+    fi
+    rm temp.txt
 }
 
 #Ensure systemd-journal-remote is installed 4.2.1.1.1
 function check-systemd-journal-remote-installed {
-    sudo dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' systemd-journal-remote
-    #Installed should be returned  
+    sudo dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' systemd-journal-remote >> temp.txt
+    search_string="systemd-journal-remote	install ok installed	installed"
+    file="temp.txt"
+    file_content=$(<"$file")
+    if [[ "$file_content" == *"$search_string"* ]]; then
+        echo "Audit Passed: Systemd-journal remote is installed."
+    else
+        echo "Audit Failed: Systemd-journal remote is not installed."
+    fi
+    rm temp.txt
 }
 
 #Ensure journald is not configured to recieve logs from a remote client 4.2.1.1.4
 function journald-restrict-remote-logs {
-    systemctl is-enabled systemd-journal-remote.socket
+    systemctl is-enabled systemd-journal-remote.socket >> temp.txt
+    search_string="disabled"
+    file="temp.txt"
+    file_content=$(<"$file")
+    if [[ "$file_content" == *"$search_string"* ]];then
+        echo "Audit Passed: Systemd Journal restricted remote logs"
+    else
+        echo "Audit Failed: Systemd journal not restricted remote logs"
+    fi
+    rm temp.txt
 }
 
 #Ensure journald service is enabled 4.2.1.2
 function check-audit-enable-journald-service {
-    systemctl is-enabled systemd-journald.service
+    systemctl is-enabled systemd-journald.service >> temp.txt
+    search_string="static"
+    file="temp.txt"
+    file_content=$(<"$file")
+    if [[ "$file_content" == *"$search_string"* ]];then
+        echo "Audit Passed: Systemd Journal enabled"
+    else
+        echo "Audit Failed: Systemd journal disabled"
+    fi
+    rm temp.txt
 }
 
 #Ensure journald is configured to compress large log files 4.2.1.3
 function check-audit-journald-compress-check {
-    grep ^\s*Compress /etc/systemd/journald.conf
+    grep ^\s*Compress /etc/systemd/journald.conf >> temp.txt
+    search_string="Compress=yes"
+    file="temp.txt"
+    file_content=$(<"$file")
+    if [[ "$file_content" == *"$search_string"* ]];then
+        echo "Audit Passed: Systemd Journal compress enabled"
+    else
+        echo "Audit Failed: Systemd journal compress enabled"
+    fi
+    rm temp.txt
+
 }
 
 #Ensure journald is configured to write logfiles to persistent disk 4.2.1.4
 function check-audit-journal-persistent-disk {
-    grep ^\s*Storage /etc/systemd/journald.conf
+    grep ^\s*Storage /etc/systemd/journald.conf >> temp.txt
+    search_string="Storage=persistent"
+    file="temp.txt"
+    file_content=$(<"$file")
+    if [[ "$file_content" == *"$search_string"* ]];then
+        echo "Audit Passed: Systemd Journal compress enabled"
+    else
+        echo "Audit Failed: Systemd journal compress enabled"
+    fi
+    rm temp.txt
 }
 
 #Ensure journald is not configured to send logs to rsyslog 4.2.1.5
 function check-audit-journald-not-rsyslog {
-    grep ^\s*ForwardToSyslog /etc/systemd/journald.conf
+    grep ^\s*ForwardToSyslog /etc/systemd/journald.conf >> temp.txt
+    if [ -s temp.txt ]; then
+        echo "Audit Failed: configuired to send logs to rsyslog"
+    else
+        echo "Audit Passed: not configured to send logs to other logging services"
+    fi
+    rm temp.txt
 }
 
 #Ensure all logfiles have appropriate  permissions and ownership 4.2.3

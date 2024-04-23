@@ -14,8 +14,8 @@ source configure-log.sh
 # verify-auditd-installed #4.1.1.1
 # verify-auditd-enabled
 # verify-auditd-active
-# find-grub2
-# check-backlog-limit
+find-grub2
+check-backlog-limit
 # check-data-retention #4.1.2
 # check-changes-admin-scope #4.1.3.1
 
@@ -103,8 +103,6 @@ source configure-log.sh
 # config-audit-chacl-usage-attempts #4.1.3.17
 # config-audit-usermod-usage-attempts #4.1.3.18
 # config-audit-kernel-module-changes #4.1.3.19
-
-
 # config-audit-immutable #4.1.3.20
 # config-audit-running-ondisk #4.1.3.21
 # config-permission-log-files #4.1.4.1
