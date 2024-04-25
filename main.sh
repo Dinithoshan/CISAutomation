@@ -1,8 +1,97 @@
 #!/bin/bash
 
+LOG_AUDIT="./log-main-audit.sh"
+LOG_CONFIG="./log-main-config.sh"
+INITIAL_AUDIT="./initial-setup-main-audit.sh"
+INITIAL_CONFIG="./initial-setup-main-config.sh"
+SERVICES_AUDIT="./services-main-audit.sh"
+SERVICES_CONFIG="./services-main-config"
+NETWORK_AUDIT="./network-main-audit.sh"
+NETWORK_CONFIG="./network-main-config.sh"
+
+# Defining functions to execute the scripts
+
+function execute_log_audit() {
+    echo "executing Audit Log Script...."
+    bash "$LOG_AUDIT"
+}
+
+function execute_log_config() {
+    echo "executing Config Log Script...."
+    bash "$LOG_CONFIG"
+}
+
+function execute_initial_audit() {
+    echo "executing Initial Audit Script...."
+    bash "$INITIAL_AUDIT"
+}
+
+function execute_initial_config() {
+    echo "executing Initial Config Script...."
+    bash "$INITIAL_CONFIG"
+}
+
+function execute_services_audit() {
+    echo "executing Audit Services Script...."
+    bash "$SERVICES_AUDIT"
+}
+
+function execute_services_config() {
+    echo "executing Config Services Script...."
+    bash "$SERVICES_CONFIG"
+}
+
+function execute_network_audit() {
+    echo "executing Audit network Script...."
+    bash "$NETWORK_AUDIT"
+}
+
+function execute_network_config() {
+    echo "execute Config network Script...."
+    bash "$NETWORK_CONFIG"
+}
+
+function displayhelp() {
+    cat help.txt /n
+}
+
 # Check if the script is not being run as root
 if [ "$EUID" -ne 0 ]; then
     echo "Script is not running as root."
 else
-    ./log-main.sh >> results.txt
+    # Process command line options
+    while getopts "lLiIsSnNh" opt; do
+        case $opt in
+            l)
+                execute_log_audit
+                ;;
+            L)
+                execute_log_config
+                ;;
+            i)
+                execute_initial_audit
+                ;;
+            I)
+                execute_initial_config
+                ;;
+            s)
+                execute_services_audit
+                ;;
+            S)
+                execute_services_config
+                ;;
+            n)
+                execute_network_audit
+                ;;
+            N)
+                execute_network_config
+                ;;
+            h)
+                displayhelp
+                ;;
+            \?)
+                echo "Invalid Option: -$OPTARG" >&2
+                ;;
+        esac
+    done
 fi
