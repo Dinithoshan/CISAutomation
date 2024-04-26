@@ -113,7 +113,7 @@ else
                 execute_run_rollback
                 ;;
             x)
-                installation
+                execute_installation
                 ;;
             \?)
                 echo "Invalid Option: -$OPTARG" >&2
