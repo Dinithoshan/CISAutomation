@@ -1,10 +1,5 @@
 #!/bin/bash
-#Author: Dinith  Oshan
-#Date: 18 March 2024
-
 #There isn't one size fits all to loggiing solutions and enterprises should use what is feasible for them.
-#There is a Disparity with 64 bit and 32 bit systems with arch parameter
-#64 bit OS requires two parameters and 32 bit requires only one.
 #4.2.1.6 is skipped due to manually having to check the parameters as per your site policy.
 #4.2.2 is skipped as  journald chosen as logging mechanism. 
 

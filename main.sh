@@ -5,9 +5,11 @@ LOG_CONFIG="./log-main-config.sh"
 INITIAL_AUDIT="./initial-setup-main-audit.sh"
 INITIAL_CONFIG="./initial-setup-main-config.sh"
 SERVICES_AUDIT="./services-main-audit.sh"
-SERVICES_CONFIG="./services-main-config"
+SERVICES_CONFIG="./services-main-config.sh"
 NETWORK_AUDIT="./network-main-audit.sh"
 NETWORK_CONFIG="./network-main-config.sh"
+RUN_ROLLBACK="./rollback-main.sh"
+INSTALLATION="./installation-main.sh"
 
 # Defining functions to execute the scripts
 
@@ -55,12 +57,27 @@ function displayhelp() {
     cat help.txt /n
 }
 
+function setrollback () {
+    timeshift --create --comments "CISRestorePoint"
+}
+
+function execute_run_rollback() {
+    echo "execute Run rolback Script...."
+    bash "$RUN_ROLLBACK"
+}
+
+function execute_installation() {
+    echo "execute Installation script...."
+    bash "$INSTALLATION"
+    echo "Installation Complete."
+}
+
 # Check if the script is not being run as root
 if [ "$EUID" -ne 0 ]; then
     echo "Script is not running as root."
 else
     # Process command line options
-    while getopts "lLiIsSnNh" opt; do
+    while getopts "lLiIsSnNhrRx" opt; do
         case $opt in
             l)
                 execute_log_audit
@@ -88,6 +105,15 @@ else
                 ;;
             h)
                 displayhelp
+                ;;
+            r)
+                setrollback
+                ;;
+            R)
+                execute_run_rollback
+                ;;
+            x)
+                installation
                 ;;
             \?)
                 echo "Invalid Option: -$OPTARG" >&2
