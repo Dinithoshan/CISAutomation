@@ -748,65 +748,7 @@ function bogus_icmp {
 
 
 function rvrs_path_filtr {
-    # {
-        
-    #     # Initialize variables to hold output messages
-    #     audit_name="Ensure Reverse Path Filtering is enabled"
-    #     l_output=""
-    #     l_output2=""
-
-    #     # Define the list of kernel parameters to audit
-    #     l_parlist="net.ipv4.conf.all.rp_filter=1 net.ipv4.conf.default.rp_filter=1"
-
-    #     # Define search locations for kernel parameter configuration files
-    #     l_searchloc="/run/sysctl.d/*.conf /etc/sysctl.d/*.conf/usr/local/lib/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /lib/sysctl.d/*.conf/etc/sysctl.conf $([ -f /etc/default/ufw ] && awk -F= '/^\s*IPT_SYSCTL=/ {print $2}' /etc/default/ufw)"
-
-    #     KPC() {
-    #         # Get the current value of the kernel parameter
-    #         l_krp="$(sysctl "$l_kpname" | awk -F= '{print $2}' | xargs)" 
-
-    #         # Find the file where the parameter is correctly configured
-    #         l_pafile="$(grep -Psl -- "^\h*$l_kpname\h*=\h*$l_kpvalue\b\h*(#.*)?$" $l_searchloc)"
-
-    #         # Find files where the parameter is incorrectly configured
-    #         l_fafile="$(grep -s -- "^\s*$l_kpname" $l_searchloc | grep -Pv "\h*=\h*$l_kpvalue\b\h*" | awk -F: '{print $1}')"
-
-    #         # Check if the current value matches the desired value
-    #         if [ "$l_krp" = "$l_kpvalue" ]; then
-    #             l_output="$l_output\n - \"$l_kpname\" is set to \"$l_kpvalue\" in the running configuration"
-    #         else
-    #             l_output2="$l_output2\n - \"$l_kpname\" is set to \"$l_krp\" in the running configuration"
-    #         fi
-
-    #         # Check if the parameter is correctly configured in a file
-    #         if [ -n "$l_pafile" ]; then
-    #             l_output="$l_output\n - \"$l_kpname\" is set to \"$l_kpvalue\" in \"$l_pafile\""
-    #         #else
-    #             #l_output2="$l_output2\n - \"$l_kpname = $l_kpvalue\" is not set in a kernel parameter configuration file"
-    #         fi
-
-    #         # Check if the parameter is incorrectly configured in files
-    #         [ -n "$l_fafile" ] && l_output2="$l_output2\n - \"$l_kpname\" is set incorrectly in \"$l_fafile\""
-    #     }
-
-    #     # Iterate through each kernel parameter in the list
-    #     for l_kpe in $l_parlist; do
-    #         # Extract kernel parameter name and value
-    #         l_kpname="$(awk -F= '{print $1}' <<< "$l_kpe")"
-    #         l_kpvalue="$(awk -F= '{print $2}' <<< "$l_kpe")"
-            
-    #         # Call the function to check the kernel parameter configuration
-    #         KPC
-    #     done
-
-    #     ## print the results of the audit
-    #     if [ -z "$l_output2" ]; then
-    #         echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
-    #     else
-    #         echo -e "\n\e[91mAUDIT FAIL\e[0m [Name - $audit_name]\n \nReason(s) for audit failure:\n$l_output2\n"
-    #     fi
-
-    # }
+    
 
 
 
@@ -885,61 +827,7 @@ function rvrs_path_filtr {
 
 
 function tcp_syn_cookies {
-    # {
-    #     # Set initial variables for output messages
-    #     audit_name="Ensure TCP SYN Cookies is enabled"
-    #     l_output=""
-    #     l_output2=""
-
-    #     # Define list of kernel parameters to audit
-    #     l_parlist="net.ipv4.tcp_syncookies=1"
-
-    #     # Define locations to search for configuration files
-    #     l_searchloc="/run/sysctl.d/*.conf /etc/sysctl.d/*.conf/usr/local/lib/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /lib/sysctl.d/*.conf/etc/sysctl.conf $([ -f /etc/default/ufw ] && awk -F= '/^\s*IPT_SYSCTL=/{print $2}' /etc/default/ufw)"
-
-    #     KPC() {
-    #         # Get the current value of the kernel parameter
-    #         l_krp="$(sysctl "$l_kpname" | awk -F= '{print $2}' | xargs)" 
-
-    #         # Find the file where the parameter is correctly configured
-    #         l_pafile="$(grep -Psl -- "^\h*$l_kpname\h*=\h*$l_kpvalue\b\h*(#.*)?$" $l_searchloc)"
-
-    #         # Find files where the parameter is incorrectly configured
-    #         l_fafile="$(grep -s -- "^\s*$l_kpname" $l_searchloc | grep -Pv "\h*=\h*$l_kpvalue\b\h*" | awk -F: '{print $1}')"
-
-    #         # Check if the current value matches the desired value
-    #         if [ "$l_krp" = "$l_kpvalue" ]; then
-    #             l_output="$l_output\n - \"$l_kpname\" is set to \"$l_kpvalue\" in the running configuration"
-    #         else
-    #             l_output2="$l_output2\n - \"$l_kpname\" is set to \"$l_krp\" in the running configuration"
-    #         fi
-
-    #         # Check if the parameter is correctly configured in kernel parameter configuration file
-    #         if [ -n "$l_pafile" ]; then
-    #             l_output="$l_output\n - \"$l_kpname\" is set to \"$l_kpvalue\" in \"$l_pafile\""
-    #         #else
-    #             #l_output2="$l_output2\n - \"$l_kpname = $l_kpvalue\" is not set in a kernel parameter configuration file"
-    #         fi
-
-    #         # Check if the parameter is incorrectly configured in files
-    #         [ -n "$l_fafile" ] && l_output2="$l_output2\n - \"$l_kpname\" is set incorrectly in \"$l_fafile\""
-    #     }
-
-    #     # Iterate over each kernel parameter in the list and perform the audit
-    #     for l_kpe in $l_parlist; do
-    #         l_kpname="$(awk -F= '{print $1}' <<< "$l_kpe")"
-    #         l_kpvalue="$(awk -F= '{print $2}' <<< "$l_kpe")"
-    #         KPC
-    #     done
-
-    #     ## print the results of the audit
-    #     if [ -z "$l_output2" ]; then
-    #         echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
-    #     else
-    #         echo -e "\n\e[91mAUDIT FAIL\e[0m [Name - $audit_name]\n \nReason(s) for audit failure:\n$l_output2\n"
-    #     fi
-
-    # }
+    
 
 
     audit_name="Ensure TCP SYN Cookies is enabled"
@@ -995,13 +883,8 @@ function tcp_syn_cookies {
         fi
     done < <(printf '%s\n' "${a_parlist[@]}")
 
-    # if [ -z "$l_output2" ]; then # Provide output from checks
-    #     echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
-    # else
-    #     echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
-    #     [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output\n"
-    # fi
-     if [ -z "$l_output2" ]; then
+    
+    if [ -z "$l_output2" ]; then
         echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
     else
         echo -e "\n\e[91mAUDIT FAIL\e[0m [Name - $audit_name]\n \nReason(s) for audit failure:\n$l_output2\n"
@@ -1024,94 +907,7 @@ function tcp_syn_cookies {
 
 function IPv6_router_ad {
 
-        # {
-    #     # Set initial variables for output messages
-    #     audit_name="Ensure IPv6 router advertisements are not accepted"
-    #     l_output=""
-    #     l_output2=""
-
-    #     # Define list of IPv6 kernel parameters to audit
-    #     l_parlist="net.ipv6.conf.all.accept_ra=0 net.ipv6.conf.default.accept_ra=0"
-
-    #     # Define locations to search for configuration files
-    #     l_searchloc="/run/sysctl.d/*.conf /etc/sysctl.d/*.conf/usr/local/lib/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /lib/sysctl.d/*.conf/etc/sysctl.conf $([ -f /etc/default/ufw ] && awk -F= '/^\s*IPT_SYSCTL=/{print $2}' /etc/default/ufw)"
-
-    #     KPC() {
-    #         # Get the current value of the kernel parameter
-    #         l_krp="$(sysctl "$l_kpname" | awk -F= '{print $2}' | xargs)" 
-
-    #         # Find the file where the parameter is correctly configured
-    #         l_pafile="$(grep -Psl -- "^\h*$l_kpname\h*=\h*$l_kpvalue\b\h*(#.*)?$" $l_searchloc)"
-
-    #         # Find files where the parameter is incorrectly configured
-    #         l_fafile="$(grep -s -- "^\s*$l_kpname" $l_searchloc | grep -Pv "\h*=\h*$l_kpvalue\b\h*" | awk -F: '{print $1}')"
-
-    #         # Check if the current value matches the desired value
-    #         if [ "$l_krp" = "$l_kpvalue" ]; then
-    #             l_output="$l_output\n - \"$l_kpname\" is set to \"$l_kpvalue\" in the running configuration"
-    #         else
-    #             l_output2="$l_output2\n - \"$l_kpname\" is set to \"$l_krp\" in the running configuration"
-    #         fi
-
-    #         # Check if the parameter is correctly configured in a file
-    #         if [ -n "$l_pafile" ]; then
-    #             l_output="$l_output\n - \"$l_kpname\" is set to \"$l_kpvalue\" in \"$l_pafile\""
-    #         #else
-    #             #l_output2="$l_output2\n - \"$l_kpname = $l_kpvalue\" is not set in a kernel parameter configuration file"
-    #         fi
-
-    #         # Check if the parameter is incorrectly configured in files
-    #         [ -n "$l_fafile" ] && l_output2="$l_output2\n - \"$l_kpname\" is set incorrectly in \"$l_fafile\""
-    #     }
-
-    #     # Function to check IPv6 configuration
-    #     ipv6_chk() {
-    #         # Initialize variable to store IPv6 status
-    #         l_ipv6s=""
-
-    #         # Find GRUB configuration file
-    #         grubfile=$(find /boot -type f \( -name 'grubenv' -o -name 'grub.conf' -o -name 'grub.cfg' \) -exec grep -Pl -- '^\h*(kernelopts=|linux|kernel)' {} \;)
-            
-    #         # Check if GRUB file exists and if IPv6 is disabled in kernel options
-    #         if [ -s "$grubfile" ]; then
-    #             # Check if IPv6.disable is not set in kernel options
-    #             ! grep -P -- "^\h*(kernelopts=|linux|kernel)" "$grubfile" | grep -vq -- ipv6.disable=1 && l_ipv6s="disabled"
-    #         fi
-            
-    #         # Check if IPv6 is disabled in sysctl configuration files and active in the kernel
-    #         if grep -Pqs -- "^\h*net\.ipv6\.conf\.all\.disable_ipv6\h*=\h*1\h*(#.*)?$" $l_searchloc && grep -Pqs -- "^\h*net\.ipv6\.conf\.default\.disable_ipv6\h*=\h*1\h*(#.*)?$" $l_searchloc && sysctl net.ipv6.conf.all.disable_ipv6 | grep -Pqs -- "^\h*net\.ipv6\.conf\.all\.disable_ipv6\h*=\h*1\h*(#.*)?$" && sysctl net.ipv6.conf.default.disable_ipv6 | grep -Pqs -- "^\h*net\.ipv6\.conf\.default\.disable_ipv6\h*=\h*1\h*(#.*)?$"; then
-    #             l_ipv6s="disabled"
-    #         fi
-            
-    #         # Check if IPv6 is disabled and set appropriate message
-    #         if [ -n "$l_ipv6s" ]; then
-    #             l_output="$l_output\n - IPv6 is disabled on the system, \"$l_kpname\" is not applicable"
-    #         else
-    #             # If IPv6 is not disabled, continue auditing other parameters
-    #             KPC
-    #         fi
-    #     }
-
-    #     # Iterate over each kernel parameter in the list and perform the audit
-    #     for l_kpe in $l_parlist; do
-    #         l_kpname="$(awk -F= '{print $1}' <<< "$l_kpe")"
-    #         l_kpvalue="$(awk -F= '{print $2}' <<< "$l_kpe")"
-    #         # Check if the parameter is related to IPv6 and call the appropriate function
-    #         if grep -q '^net.ipv6.' <<< "$l_kpe"; then
-    #             ipv6_chk
-    #         else
-    #             KPC
-    #         fi
-    #     done
-
-    #     #print the results of the audit
-    #     if [ -z "$l_output2" ]; then
-    #         echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
-    #     else
-    #         echo -e "\n\e[91mAUDIT FAIL\e[0m [Name - $audit_name]\n \nReason(s) for audit failure:\n$l_output2\n"
-    #     fi
-
-    # }
+    
 
     audit_name="Ensure IPv6 router advertisements are not accepted"
     l_output=""
@@ -1166,12 +962,7 @@ function IPv6_router_ad {
         fi
     done < <(printf '%s\n' "${a_parlist[@]}")
 
-    # if [ -z "$l_output2" ]; then # Provide output from checks
-    #     echo -e "\n- Audit Result:\n ** PASS **\n$l_output\n"
-    # else
-    #     echo -e "\n- Audit Result:\n ** FAIL **\n - Reason(s) for audit failure:\n$l_output2\n"
-    #     [ -n "$l_output" ] && echo -e "\n- Correctly set:\n$l_output\n"
-    # fi
+    
     if [ -z "$l_output2" ]; then
         echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
     else
@@ -1413,218 +1204,7 @@ function tipc_disbl {
 
 
 
-###################################################################################################################################################################################
-###################################################################################################################################################################################
-################################################################# 3.5.1.1 Ensure ufw is installed #################################################################################
-
-
-function ufw_ins {
-
-    # Use dpkg-query to check the status of the ufw package
-    local status=$(dpkg-query -W -f='${Status}' ufw 2>/dev/null)
-    
-    # Check if the status contains "installed" substring
-    if [[ "$status" == *"installed"* ]]; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw is installed]\n"
-    else
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - UFW is not installed]\n"
-    fi
-}
-
-
-
-
-
-######################################################### 3.5.1.2 Ensure iptables-persistent is not installed with ufw ########################################################
-
-
-
-
-
-function ip_tbl_persis {
-    # Execute dpkg-query command to check the status of the iptables-persistent package
-    dpkg-query -s iptables-persistent &>/dev/null
-    
-    # Check the exit status of the dpkg-query command
-    if [[ $? -ne 0 ]]; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables-persistent is not installed with ufw]\n"
-    else
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables-persistent is not installed with ufw]\n"
-    fi
-}
-
-
-
-
-
-
-######################################################### 3.5.1.3 Ensure ufw service is enabled ##############################################################################
-
-
-
-
-
-
-function ufw_enable {
-    # Check if UFW daemon is enabled using systemctl 
-    # then verify that the ufw daemon is active
-    # then ufw is active
-    if [ "$(systemctl is-enabled ufw.service)" = "enabled" ] && \
-       [ "$(systemctl is-active ufw)" = "active" ] && \
-       [ "$(ufw status | grep Status)" = "Status: active" ]; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw service is enabled]\n"  # If all checks pass, UFW is enabled
-    else
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw service is enabled]\n"  # If any check fails, UFW is not enabled
-    fi
-}
-
-
-
-
-
-############################################################ 3.5.1.4 Ensure ufw loopback traffic is configured #################################################################
-
-
-
-
-
-# Define a function named verify_ufw_rules
-function ufw_lback_traf {
-    # Run the ufw status verbose command and store the output in the variable ufw_status_output
-    ufw_status_output=$(ufw status verbose)
-
-    # Define an array named expected_rules to hold the expected rules in the format "From To Action"
-    expected_rules=(
-        "Anywhere on lo             ALLOW IN    Anywhere"
-        "Anywhere                   DENY IN     127.0.0.0/8"
-        "Anywhere (v6) on lo        ALLOW IN    Anywhere (v6)"
-        "Anywhere (v6)              DENY IN     ::1"
-        "Anywhere                   ALLOW OUT   Anywhere on lo "
-        "Anywhere (v6)              ALLOW OUT   Anywhere (v6) on lo"
-    )
-
-    # Initialize a variable to store missing rules
-    missing_rules=""
-
-    # Iterate over each expected rule
-    for rule in "${expected_rules[@]}"; do
-        # Check if the current rule exists in the output of ufw status verbose command
-        if ! grep -q "$rule" <<< "$ufw_status_output"; then
-            # Append the missing rule to the variable missing_rules
-            missing_rules+="$rule\n"
-        fi
-    done
-
-    # Check if any expected rules are missing
-    if [ -n "$missing_rules" ]; then
-        # Print a message indicating the missing rules
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw loopback traffic is configured]"
-        echo -e "\nMissing Rules:\n"
-        echo -e "$missing_rules" | while IFS= read -r line; do echo "$line"; done
-        # Return with a non-zero exit status to indicate verification failure
-        return 1
-    else
-        # If all expected rules are found, print a success message
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw service is enabled]\n"
-    fi
-}
-
-
-
-
-
-
-############################################################# 3.5.1.5 Ensure ufw outbound connections are configured ##############################################################
-
-
-
-
-
-# Define a function to verify ufw rules for outbound connections
-function ufw_outbound_conf {
-    # Run ufw status numbered command and filter the output to show only rules for outbound connections
-    ufw_status=$(ufw status numbered | grep -E 'ALLOW OUT')
-
-    # Check if there are any rules allowing outbound connections
-    if [ -n "$ufw_status" ]; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw outbound connections are configured]\n"
-    else
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw outbound connections are configured]\n"
-        echo -e "Reason(s) for failure:\n"
-        echo -e "No rules found for new outbound connections or they don't match the site policy\n"
-    fi
-}
-
-
-
-
-
-
-################################################################ 3.5.1.6 Ensure ufw firewall rules exist for all open ports ##########################################################
-
-
-
-
-
-# Define a function to check for missing firewall rules in ufw configuration
-function mis_firewall_rules {
-    # Store the verbose output of 'ufw status' command in the variable ufw_out
-    ufw_out="$(ufw status verbose)"
-
-    # Use 'ss' to list all listening TCP and UDP sockets excluding localhost and loopback addresses,
-    # extract the port numbers, sort them, and remove duplicates
-    ports=$(ss -tuln | awk '($5!~/%lo:/ && $5!~/127.0.0.1:/ && $5!~/::1/) {split($5, a, ":"); print a[2]}' | sort | uniq)
-    
-    mis_rules="" #empty varible to store missing rules
-    found_missing_rule=false # Initialize a flag to indicate if any missing rule is found
-    
-    # Iterate over each extracted port number
-    for lpn in $ports; do
-        # Check if the port number has a corresponding firewall rule in ufw_out
-        if ! grep -Pq "^\h*$lpn\b" <<< "$ufw_out"; then
-            # Append the missing rule to the variable missing_rules
-            mis_rules+="$lpn\n"
-            # Set the flag to indicate a missing rule is found
-            found_missing_rule=true
-        fi
-    done
-    
-    # Check if any missing rule is found
-    if ! "$found_missing_rule"; then
-        # If no missing rule is found, print an "Audit PASS" message
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw firewall rules exist for all open ports]\n"
-    else
-        # If any missing rule is found, print an "Audit FAIL" message
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw firewall rules exist for all open ports]"
-        echo -e "\nPorts missing Rules:\n"
-        echo -e "$mis_rules" | while IFS= read -r line; do echo "$line"; done
-    fi
-}
-
-
-
-
-
-
-############################################################### 3.5.1.7 Ensure ufw default deny firewall policy #####################################################################
-
-
-
-
-
-# Define a function to verify default UFW policies
-function ufw_deny_policies {
-    # Run the ufw status verbose command and filter for lines containing "Default:"
-    default_policies=$(ufw status verbose | grep Default:)
-
-    # Check if the default policies are set to deny for incoming, outgoing, and routed traffic
-    if echo "$default_policies" | grep -q "Default: deny (incoming), deny (outgoing), disabled (routed)"; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw default deny firewall policy]\n"
-    else
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw default deny firewall policy]\n"
-    fi
-}
-
+# 
 
 
 
@@ -1955,535 +1535,794 @@ function nft_ruls_perme {
 
 
 
-##########################################################################################################################################################
-##########################################################################################################################################################
+# ##########################################################################################################################################################
+# ##########################################################################################################################################################
+# ##########################################################################################################################################################
 
-############################################### 3.5.3.1.1 Ensure iptables packages are installed #########################################################
-
-
-
-
-
-function iptabls_installed {
-
-    # Initialize a variable to store failure messages
-    fail_con=""
-    # Check if iptables and iptables-persistent are installed
-    iptables_installed=$(dpkg -l iptables 2>/dev/null | grep -E '^ii' | wc -l)
-    iptables_persistent_installed=$(dpkg -l iptables-persistent 2>/dev/null | grep -E '^ii' | wc -l)
-
-    #  messages based on installation status
-    if [ "$iptables_installed" -gt 0 ]; then
-        :
-    else
-        fail_con+="iptables is not installed\n"
-    fi
-
-    if [ "$iptables_persistent_installed" -gt 0 ]; then
-        :
-    else
-        fail_con+="iptables-persistent is not installed\n"
-    fi
-
-    # print results
-    if [ -n "$fail_con" ]; then
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables packages are installed]\n"
-        echo -e "Reason(s) for failure:\n"
-        echo -e "$fail_con"
-    else 
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables packages are installed]\n"
-    fi
-}
+# ############################################### 3.5.3.1.1 Ensure iptables packages are installed #########################################################
 
 
 
 
 
-############################################# 3.5.3.1.2 Ensure nftables is not installed with iptables ####################################################
+# function iptabls_installed {
+
+#     # Initialize a variable to store failure messages
+#     fail_con=""
+#     # Check if iptables and iptables-persistent are installed
+#     iptables_installed=$(dpkg -l iptables 2>/dev/null | grep -E '^ii' | wc -l)
+#     iptables_persistent_installed=$(dpkg -l iptables-persistent 2>/dev/null | grep -E '^ii' | wc -l)
+
+#     #  messages based on installation status
+#     if [ "$iptables_installed" -gt 0 ]; then
+#         :
+#     else
+#         fail_con+="iptables is not installed\n"
+#     fi
+
+#     if [ "$iptables_persistent_installed" -gt 0 ]; then
+#         :
+#     else
+#         fail_con+="iptables-persistent is not installed\n"
+#     fi
+
+#     # print results
+#     if [ -n "$fail_con" ]; then
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables packages are installed]\n"
+#         echo -e "Reason(s) for failure:\n"
+#         echo -e "$fail_con"
+#     else 
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables packages are installed]\n"
+#     fi
+# }
 
 
 
 
 
-function nftbls_not_ins {
-    # Run dpkg-query to check the status of the nftables package
-    nftables_status=$(dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' nftables 2>/dev/null)
+# ############################################# 3.5.3.1.2 Ensure nftables is not installed with iptables ####################################################
+
+
+
+
+
+# function nftbls_not_ins {
+#     # Run dpkg-query to check the status of the nftables package
+#     nftables_status=$(dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' nftables 2>/dev/null)
     
-    # Check if the status indicates that nftables is not installed
-    if ! grep -q "nftables        unknown ok not-installed        not-installed" <<< "$nftables_status"; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure nftables is not installed with iptables]\n"  # Print message if nftables is not installed
-        return 0  # Return success status
-    else
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure nftables is not installed with iptables]\n"  # Print message if nftables is installed
-        return 1  # Return failure status
-    fi
-}
+#     # Check if the status indicates that nftables is not installed
+#     if ! grep -q "nftables        unknown ok not-installed        not-installed" <<< "$nftables_status"; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure nftables is not installed with iptables]\n"  # Print message if nftables is not installed
+#         return 0  # Return success status
+#     else
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure nftables is not installed with iptables]\n"  # Print message if nftables is installed
+#         return 1  # Return failure status
+#     fi
+# }
 
 
 
 
 
-##################################################### 3.5.3.1.3 Ensure ufw is uninstalled or disabled with iptables #######################################
+# ##################################################### 3.5.3.1.3 Ensure ufw is uninstalled or disabled with iptables #######################################
 
 
 
 
 
-ufw_not_inst_disbld() {
-    # Check if ufw is not installed
-    ufw_status_ins=$(dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' ufw 2>/dev/null)
-    #Check if ufw is disabled
-    ufw_status_dis=$(ufw status)
+# ufw_not_inst_disbld() {
+#     # Check if ufw is not installed
+#     ufw_status_ins=$(dpkg-query -W -f='${binary:Package}\t${Status}\t${db:Status-Status}\n' ufw 2>/dev/null)
+#     #Check if ufw is disabled
+#     ufw_status_dis=$(ufw status)
 
-    if grep -q "not-installed" <<< "$ufw_status_ins"; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw is uninstalled or disabled with iptables]\n"
+#     if grep -q "not-installed" <<< "$ufw_status_ins"; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw is uninstalled or disabled with iptables]\n"
 
     
-    elif grep -q "Status: inactive" <<< "$ufw_status_dis"; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw is uninstalled or disabled with iptables]\n"
+#     elif grep -q "Status: inactive" <<< "$ufw_status_dis"; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw is uninstalled or disabled with iptables]\n"
 
-    # Check if ufw service is masked
-    elif systemctl is-enabled ufw | grep -q "masked"; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw is uninstalled or disabled with iptables]\n"
+#     # Check if ufw service is masked
+#     elif systemctl is-enabled ufw | grep -q "masked"; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw is uninstalled or disabled with iptables]\n"
 
-    else
-        # If none of the above conditions are met, return failure
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw is uninstalled or disabled with iptables]\n" 
+#     else
+#         # If none of the above conditions are met, return failure
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw is uninstalled or disabled with iptables]\n" 
 
-    fi
-}
-
-
-
-
-
-############################################## 3.5.3.2.1 Ensure iptables default deny firewall policy #################################################
-
-
-
-
-function iptbl_deny_policy {
-    # Declare an array to hold the chain names
-    chains=("INPUT" "OUTPUT" "FORWARD")
-
-    # Initialize a variable to store failure messages
-    failure_con=""
-
-    # Run iptables -L command and store the output
-    iptables_output=$(iptables -L)
-
-    # Iterate over each chain
-    for chain in "${chains[@]}"; do
-        # Check the policy for the current chain
-        if ! echo "$iptables_output" | grep -q "Chain $chain.*policy DROP\|REJECT"; then
-            # Initialize a variable to store failure messages
-            failure_con+="Policy for $chain chain is not DROP or REJECT\n"
-        fi
-    done
-
-        # print results
-    if [ -n "$failure_con" ]; then
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables default deny firewall policy]\n"
-        echo -e "Reason(s) for failure:\n"
-        echo -e "$failure_con"
-    else 
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables default deny firewall policy]\n"
-    fi
-}
+#     fi
+# }
 
 
 
 
 
-############################################### 3.5.3.2.2 Ensure iptables loopback traffic is configured ################################################
+# ############################################## 3.5.3.2.1 Ensure iptables default deny firewall policy #################################################
 
 
 
 
-function iptbl_lback_traf {
+# function iptbl_deny_policy {
+#     # Declare an array to hold the chain names
+#     chains=("INPUT" "OUTPUT" "FORWARD")
 
-    # Run iptables -L command for each chain and store the output
-    input_output=$(iptables -L INPUT -v -n | awk '{$1=$2=""; print $0}' | sed 's/^  *//')
-    output_output=$(iptables -L OUTPUT -v -n | awk '{$1=$2=""; print $0}' | sed 's/^  *//')
+#     # Initialize a variable to store failure messages
+#     failure_con=""
 
-    input_third_line=$(echo "$input_output" | sed -n '3p')
-    input_fourth_line=$(echo "$input_output" | sed -n '4p')
-    output_third_line=$(echo "$output_output" | sed -n '3p')
-    fail_con=""
+#     # Run iptables -L command and store the output
+#     iptables_output=$(iptables -L)
 
-    if [ "$input_third_line" != "ACCEPT all -- lo * 0.0.0.0/0 0.0.0.0/0" ]; then
-        fail_con+="$input_third_line\n" 
-    fi
+#     # Iterate over each chain
+#     for chain in "${chains[@]}"; do
+#         # Check the policy for the current chain
+#         if ! echo "$iptables_output" | grep -q "Chain $chain.*policy DROP\|REJECT"; then
+#             # Initialize a variable to store failure messages
+#             failure_con+="Policy for $chain chain is not DROP or REJECT\n"
+#         fi
+#     done
 
-    if [ "$input_fourth_line" != "DROP all -- * * 127.0.0.0/8 0.0.0.0/0" ]; then
-        fail_con+="$input_fourth_line\n"
-    fi
-
-    if [ "$output_third_line" != "ACCEPT all -- * lo 0.0.0.0/0 0.0.0.0/0" ]; then
-        fail_con+="$output_third_line\n"
-    fi
-
-        if [ -n "$fail_con" ]; then
-            echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables loopback traffic is configured]\n"
-            echo -e "Reason(s) for failure:\n"
-        echo -e "The rules do not match"
-            echo -e "$fail_con"
-        else
-            echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables loopback traffic is configured]\n"
-        fi
-
-}
+#         # print results
+#     if [ -n "$failure_con" ]; then
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables default deny firewall policy]\n"
+#         echo -e "Reason(s) for failure:\n"
+#         echo -e "$failure_con"
+#     else 
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables default deny firewall policy]\n"
+#     fi
+# }
 
 
 
 
 
-######################################### 3.5.3.2.3 Ensure iptables outbound and established connections are configured ####################################
+# ############################################### 3.5.3.2.2 Ensure iptables loopback traffic is configured ################################################
+
+
+
+
+# function iptbl_lback_traf {
+
+#     # Run iptables -L command for each chain and store the output
+#     input_output=$(iptables -L INPUT -v -n | awk '{$1=$2=""; print $0}' | sed 's/^  *//')
+#     output_output=$(iptables -L OUTPUT -v -n | awk '{$1=$2=""; print $0}' | sed 's/^  *//')
+
+#     input_third_line=$(echo "$input_output" | sed -n '3p')
+#     input_fourth_line=$(echo "$input_output" | sed -n '4p')
+#     output_third_line=$(echo "$output_output" | sed -n '3p')
+#     fail_con=""
+
+#     if [ "$input_third_line" != "ACCEPT all -- lo * 0.0.0.0/0 0.0.0.0/0" ]; then
+#         fail_con+="$input_third_line\n" 
+#     fi
+
+#     if [ "$input_fourth_line" != "DROP all -- * * 127.0.0.0/8 0.0.0.0/0" ]; then
+#         fail_con+="$input_fourth_line\n"
+#     fi
+
+#     if [ "$output_third_line" != "ACCEPT all -- * lo 0.0.0.0/0 0.0.0.0/0" ]; then
+#         fail_con+="$output_third_line\n"
+#     fi
+
+#         if [ -n "$fail_con" ]; then
+#             echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables loopback traffic is configured]\n"
+#             echo -e "Reason(s) for failure:\n"
+#         echo -e "The rules do not match"
+#             echo -e "$fail_con"
+#         else
+#             echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables loopback traffic is configured]\n"
+#         fi
+
+# }
 
 
 
 
 
-function iptabls_site_policy {
-    # Run iptables -L -v -n command and store the output
-    iptables_output=$(iptables -L -v -n)
+# ######################################### 3.5.3.2.3 Ensure iptables outbound and established connections are configured ####################################
 
-    # Check if the output contains any rules that match the site policy
-    if echo "$iptables_output" | grep -qE 'NEW|ESTABLISHED'; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables outbound and established connections are configured]\n"
+
+
+
+
+# function iptabls_site_policy {
+#     # Run iptables -L -v -n command and store the output
+#     iptables_output=$(iptables -L -v -n)
+
+#     # Check if the output contains any rules that match the site policy
+#     if echo "$iptables_output" | grep -qE 'NEW|ESTABLISHED'; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables outbound and established connections are configured]\n"
         
-    else
-        echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables outbound and established connections are configured]\n"
-    fi
-}
+#     else
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables outbound and established connections are configured]\n"
+#     fi
+# }
 
 
 
 
-######################################### 3.5.3.2.4 Ensure iptables firewall rules exist for all open ports ###############################################
+# ######################################### 3.5.3.2.4 Ensure iptables firewall rules exist for all open ports ###############################################
 
 
 
 
 
-# Define a function to verify that firewall rules are configured for open ports
-function firewll_rule_exist {
+# # Define a function to verify that firewall rules are configured for open ports
+# function firewll_rule_exist {
 
-    audit_name="Ensure iptables firewall rules exist for all open ports"
+#     audit_name="Ensure iptables firewall rules exist for all open ports"
 
-    # Get list of open ports with protocol
-    open_ports=$(ss -4tuln | awk '{print $1":"$4":"$5}')
+#     # Get list of open ports with protocol
+#     open_ports=$(ss -4tuln | awk '{print $1":"$4":"$5}')
 
-    # Loop through each open port and protocol
-    for line in $open_ports
-    do
-        # Extract protocol, port number (local and remote)
-        protocol=$(echo $line | cut -d ':' -f 1)
+#     # Loop through each open port and protocol
+#     for line in $open_ports
+#     do
+#         # Extract protocol, port number (local and remote)
+#         protocol=$(echo $line | cut -d ':' -f 1)
 
-        port=$(echo $line | cut -d ':' -f 4)
+#         port=$(echo $line | cut -d ':' -f 4)
         
-        # Check firewall rule (unchanged)
-        rule_exists=$(sudo iptables -L INPUT -v -n | grep "dpt:$port" | wc -l)
+#         # Check firewall rule (unchanged)
+#         rule_exists=$(sudo iptables -L INPUT -v -n | grep "dpt:$port" | wc -l)
 
-        # Print information (modified)
-        if [ $rule_exists -eq 0 ] && [ -n "$port" ]; then
+#         # Print information (modified)
+#         if [ $rule_exists -eq 0 ] && [ -n "$port" ]; then
             
-        message+="No firewall rule for port $port (protocol: $protocol)"$'\n'
+#         message+="No firewall rule for port $port (protocol: $protocol)"$'\n'
 
-        fi
+#         fi
 
-    done
-
-
-    if [ -z "$message" ]; then
-    echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
-        else
-            echo -e "\n\e[91mAUDIT FAIL\e[0m [Name - $audit_name]\n \nReason(s) for audit failure:\n$message\n"
-        fi
-}
+#     done
 
 
-
-
-
-############################################# 3.5.3.3.1 Ensure ip6tables default deny firewall policy ####################################################
+#     if [ -z "$message" ]; then
+#     echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
+#         else
+#             echo -e "\n\e[91mAUDIT FAIL\e[0m [Name - $audit_name]\n \nReason(s) for audit failure:\n$message\n"
+#         fi
+# }
 
 
 
 
 
-
-# Define a function to verify IPv6 configuration
-function ipv6_default_poli {
-    audit_name="Ensure ip6tables default deny firewall policy "
-    # # Check if ip6tables policies are DROP or REJECT
-    # ip6tables_policies=$(ip6tables -L | grep -E 'Chain (INPUT|FORWARD|OUTPUT) (policy DROP|policy REJECT)')
-
-    # Declare an array to hold the chain names
-    chains=("INPUT" "OUTPUT" "FORWARD")
-
-    # Initialize a variable to store failure messages
-    failure_con=""
-
-    # Run iptables -L command and store the output
-    iptables_output=$(iptables -L)
-
-    # Iterate over each chain
-    for chain in "${chains[@]}"; do
-        # Check the policy for the current chain
-        if ! echo "$iptables_output" | grep -q "Chain $chain.*policy DROP\|REJECT"; then
-            # Initialize a variable to store failure messages
-            failure_con+="Policy for $chain chain is not DROP or REJECT\n"
-        fi
-    done
+# ############################################# 3.5.3.3.1 Ensure ip6tables default deny firewall policy ####################################################
 
 
-    ip6_disable() {
-        # Initialize an empty string to store IPv6 disabled messages
-        output1=""
 
-        # Check if IPv6 is disabled in grub config
-        grubfile="$(find -L /boot -name 'grub.cfg' -type f)"
-        if [ -f "$grubfile" ] && ! grep "^\s*linux" "$grubfile" | grep -vq ipv6.disable=1; then
-            output1+="ipv6 disabled in grub config\n"
-        fi
 
-        # Check if IPv6 is disabled in sysctl config files
-        if grep -Eqs "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
-        grep -Eqs "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
-        sysctl net.ipv6.conf.all.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" &&
-        sysctl net.ipv6.conf.default.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b"; then
-            output1+="ipv6 disabled in sysctl config\n"
-        fi
+
+
+# # Define a function to verify IPv6 configuration
+# function ipv6_default_poli {
+#     audit_name="Ensure ip6tables default deny firewall policy "
+#     # # Check if ip6tables policies are DROP or REJECT
+#     # ip6tables_policies=$(ip6tables -L | grep -E 'Chain (INPUT|FORWARD|OUTPUT) (policy DROP|policy REJECT)')
+
+#     # Declare an array to hold the chain names
+#     chains=("INPUT" "OUTPUT" "FORWARD")
+
+#     # Initialize a variable to store failure messages
+#     failure_con=""
+
+#     # Run iptables -L command and store the output
+#     iptables_output=$(iptables -L)
+
+#     # Iterate over each chain
+#     for chain in "${chains[@]}"; do
+#         # Check the policy for the current chain
+#         if ! echo "$iptables_output" | grep -q "Chain $chain.*policy DROP\|REJECT"; then
+#             # Initialize a variable to store failure messages
+#             failure_con+="Policy for $chain chain is not DROP or REJECT\n"
+#         fi
+#     done
+
+
+#     ip6_disable() {
+#         # Initialize an empty string to store IPv6 disabled messages
+#         output1=""
+
+#         # Check if IPv6 is disabled in grub config
+#         grubfile="$(find -L /boot -name 'grub.cfg' -type f)"
+#         if [ -f "$grubfile" ] && ! grep "^\s*linux" "$grubfile" | grep -vq ipv6.disable=1; then
+#             output1+="ipv6 disabled in grub config\n"
+#         fi
+
+#         # Check if IPv6 is disabled in sysctl config files
+#         if grep -Eqs "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
+#         grep -Eqs "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
+#         sysctl net.ipv6.conf.all.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" &&
+#         sysctl net.ipv6.conf.default.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b"; then
+#             output1+="ipv6 disabled in sysctl config\n"
+#         fi
         
-        # print results
-        if [ -n "$output1" ]; then
-            echo -e "\n\e[32mAudit PASS\e[0m [Name - $audit_name]\n"
-            echo -e "Reason(s) for success:\n"
-            echo -e "$output1"
-        else 
-            echo -e "\n\e[91mAudit FAIL\e[0m [Name - $audit_name]\n"
-            echo -e "Reason(s) for failure:\n"
-            echo -e "IPv6 is enabled on the system\n"
-        fi
-    }
+#         # print results
+#         if [ -n "$output1" ]; then
+#             echo -e "\n\e[32mAudit PASS\e[0m [Name - $audit_name]\n"
+#             echo -e "Reason(s) for success:\n"
+#             echo -e "$output1"
+#         else 
+#             echo -e "\n\e[91mAudit FAIL\e[0m [Name - $audit_name]\n"
+#             echo -e "Reason(s) for failure:\n"
+#             echo -e "IPv6 is enabled on the system\n"
+#         fi
+#     }
 
-    if [ -z "$failure_con" ]; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ip6tables default deny firewall policy]\n"
-        echo -e "Reason(s) for success:\n"
-        echo -e "IPv6 policies are set to DROP or REJECT\n"
-    else
-        # call function
-        ip6_disable
-    fi
-}
-
-
-
-
-
-########################################## 3.5.3.3.2 Ensure ip6tables loopback traffic is configured ################################################
+#     if [ -z "$failure_con" ]; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ip6tables default deny firewall policy]\n"
+#         echo -e "Reason(s) for success:\n"
+#         echo -e "IPv6 policies are set to DROP or REJECT\n"
+#     else
+#         # call function
+#         ip6_disable
+#     fi
+# }
 
 
 
 
 
-# Define a function to verify ip6tables rules
-function ip6_lback_traff {
-    audit_name="Ensure ip6tables loopback traffic is configured"
+# ########################################## 3.5.3.3.2 Ensure ip6tables loopback traffic is configured ################################################
 
-    ip6_disable() {
-        # Initialize an empty string to store IPv6 disabled messages
-        output1=""
 
-        # Check if IPv6 is disabled in grub config
-        grubfile="$(find -L /boot -name 'grub.cfg' -type f)"
-        if [ -f "$grubfile" ] && ! grep "^\s*linux" "$grubfile" | grep -vq ipv6.disable=1; then
-            output1+="ipv6 disabled in grub config\n"
-        fi
 
-        # Check if IPv6 is disabled in sysctl config files
-        if grep -Eqs "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
-        grep -Eqs "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
-        sysctl net.ipv6.conf.all.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" &&
-        sysctl net.ipv6.conf.default.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b"; then
-            output1+="ipv6 disabled in sysctl config\n"
-        fi
+
+
+# # Define a function to verify ip6tables rules
+# function ip6_lback_traff {
+#     audit_name="Ensure ip6tables loopback traffic is configured"
+
+#     ip6_disable() {
+#         # Initialize an empty string to store IPv6 disabled messages
+#         output1=""
+
+#         # Check if IPv6 is disabled in grub config
+#         grubfile="$(find -L /boot -name 'grub.cfg' -type f)"
+#         if [ -f "$grubfile" ] && ! grep "^\s*linux" "$grubfile" | grep -vq ipv6.disable=1; then
+#             output1+="ipv6 disabled in grub config\n"
+#         fi
+
+#         # Check if IPv6 is disabled in sysctl config files
+#         if grep -Eqs "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
+#         grep -Eqs "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
+#         sysctl net.ipv6.conf.all.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" &&
+#         sysctl net.ipv6.conf.default.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b"; then
+#             output1+="ipv6 disabled in sysctl config\n"
+#         fi
         
-        # print results
-        if [ -n "$output1" ]; then
-            echo -e "\n\e[32mAudit PASS\e[0m [Name - $audit_name]\n"
-            echo -e "Reason(s) for success:\n"
-            echo -e "$output1"
-        else 
-            echo -e "\n\e[91mAudit FAIL\e[0m [Name - $audit_name]\n"
-            echo -e "Reason(s) for failure:\n"
-            echo -e "IPv6 is enabled on the system\n"
-        fi
-    }
+#         # print results
+#         if [ -n "$output1" ]; then
+#             echo -e "\n\e[32mAudit PASS\e[0m [Name - $audit_name]\n"
+#             echo -e "Reason(s) for success:\n"
+#             echo -e "$output1"
+#         else 
+#             echo -e "\n\e[91mAudit FAIL\e[0m [Name - $audit_name]\n"
+#             echo -e "Reason(s) for failure:\n"
+#             echo -e "IPv6 is enabled on the system\n"
+#         fi
+#     }
 
-    # Run iptables -L command for each chain and store the output
-    input_output=$(ip6tables -L INPUT -v -n | awk '{$1=$2=""; print $0}' | sed 's/^  *//')
-    output_output=$(ip6tables -L OUTPUT -v -n | awk '{$1=$2=""; print $0}' | sed 's/^  *//')    
-    # Run iptables -L command for each chain and store the output
+#     # Run iptables -L command for each chain and store the output
+#     input_output=$(ip6tables -L INPUT -v -n | awk '{$1=$2=""; print $0}' | sed 's/^  *//')
+#     output_output=$(ip6tables -L OUTPUT -v -n | awk '{$1=$2=""; print $0}' | sed 's/^  *//')    
+#     # Run iptables -L command for each chain and store the output
 
-    input_third_line=$(echo "$input_output" | sed -n '3p')
-    input_fourth_line=$(echo "$input_output" | sed -n '4p')
-    output_third_line=$(echo "$output_output" | sed -n '3p')
-    fail_con=""
+#     input_third_line=$(echo "$input_output" | sed -n '3p')
+#     input_fourth_line=$(echo "$input_output" | sed -n '4p')
+#     output_third_line=$(echo "$output_output" | sed -n '3p')
+#     fail_con=""
 
-    if [ "$input_third_line" != "ACCEPT all lo * ::/0 ::/0" ]; then
-        fail_con+="$input_third_line\n" 
-    fi
+#     if [ "$input_third_line" != "ACCEPT all lo * ::/0 ::/0" ]; then
+#         fail_con+="$input_third_line\n" 
+#     fi
 
-    if [ "$input_fourth_line" != "DROP all * * ::1 ::/0" ]; then
-        fail_con+="$input_fourth_line\n"
-    fi
+#     if [ "$input_fourth_line" != "DROP all * * ::1 ::/0" ]; then
+#         fail_con+="$input_fourth_line\n"
+#     fi
 
-    if [ "$output_third_line" != "ACCEPT all * lo ::/0 ::/0" ]; then
-        fail_con+="$output_third_line\n"
-    fi
+#     if [ "$output_third_line" != "ACCEPT all * lo ::/0 ::/0" ]; then
+#         fail_con+="$output_third_line\n"
+#     fi
 
-    if [ -z "$fail_con" ]; then
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ip6tables loopback traffic is configured]\n"
-    else
-        ip6_disable
-    fi
+#     if [ -z "$fail_con" ]; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ip6tables loopback traffic is configured]\n"
+#     else
+#         ip6_disable
+#     fi
     
-}
+# }
 
 
 
 
 
-########################################## 3.5.3.3.3 Ensure ip6tables outbound and established connections are configured #################################
+# ########################################## 3.5.3.3.3 Ensure ip6tables outbound and established connections are configured #################################
 
 
 
 
 
-function ip6_site_policy {
-    audit_name="Ensure ip6tables outbound and established connections are configured"
+# function ip6_site_policy {
+#     audit_name="Ensure ip6tables outbound and established connections are configured"
 
-    # Run ip6tables -L -v -n command and store the output
-    iptables_output=$(ip6tables -L -v -n)
+#     # Run ip6tables -L -v -n command and store the output
+#     iptables_output=$(ip6tables -L -v -n)
 
-    ip6_disable() {
-        # Initialize an empty string to store IPv6 disabled messages
-        output1=""
+#     ip6_disable() {
+#         # Initialize an empty string to store IPv6 disabled messages
+#         output1=""
 
-        # Check if IPv6 is disabled in grub config
-        grubfile="$(find -L /boot -name 'grub.cfg' -type f)"
-        if [ -f "$grubfile" ] && ! grep "^\s*linux" "$grubfile" | grep -vq ipv6.disable=1; then
-            output1+="ipv6 disabled in grub config\n"
-        fi
+#         # Check if IPv6 is disabled in grub config
+#         grubfile="$(find -L /boot -name 'grub.cfg' -type f)"
+#         if [ -f "$grubfile" ] && ! grep "^\s*linux" "$grubfile" | grep -vq ipv6.disable=1; then
+#             output1+="ipv6 disabled in grub config\n"
+#         fi
 
-        # Check if IPv6 is disabled in sysctl config files
-        if grep -Eqs "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
-        grep -Eqs "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
-        sysctl net.ipv6.conf.all.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" &&
-        sysctl net.ipv6.conf.default.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b"; then
-            output1+="ipv6 disabled in sysctl config\n"
-        fi
+#         # Check if IPv6 is disabled in sysctl config files
+#         if grep -Eqs "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
+#         grep -Eqs "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
+#         sysctl net.ipv6.conf.all.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" &&
+#         sysctl net.ipv6.conf.default.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b"; then
+#             output1+="ipv6 disabled in sysctl config\n"
+#         fi
         
-        # print results
-        if [ -n "$output1" ]; then
-            echo -e "\n\e[32mAudit PASS\e[0m [Name - $audit_name]\n"
-            echo -e "Reason(s) for success:\n"
-            echo -e "$output1"
-        else 
-            echo -e "\n\e[91mAudit FAIL\e[0m [Name - $audit_name]\n"
-            echo -e "Reason(s) for failure:\n"
-            echo -e "IPv6 is enabled on the system\n"
-        fi
-    }
+#         # print results
+#         if [ -n "$output1" ]; then
+#             echo -e "\n\e[32mAudit PASS\e[0m [Name - $audit_name]\n"
+#             echo -e "Reason(s) for success:\n"
+#             echo -e "$output1"
+#         else 
+#             echo -e "\n\e[91mAudit FAIL\e[0m [Name - $audit_name]\n"
+#             echo -e "Reason(s) for failure:\n"
+#             echo -e "IPv6 is enabled on the system\n"
+#         fi
+#     }
 
-    # Check if the output contains any rules that match the site policy
-    if echo "$iptables_output" | grep -qE 'NEW|ESTABLISHED'; then
-        # Output audit pass message if the rules match the site policy
-        echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ip6tables outbound and established connections are configured]\n"
-    else
-        # call function
-        ip6_disable
-    fi
-}
-
-
-
-
-
-############################################# 3.5.3.3.4 Ensure ip6tables firewall rules exist for all open ports ##########################################
+#     # Check if the output contains any rules that match the site policy
+#     if echo "$iptables_output" | grep -qE 'NEW|ESTABLISHED'; then
+#         # Output audit pass message if the rules match the site policy
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ip6tables outbound and established connections are configured]\n"
+#     else
+#         # call function
+#         ip6_disable
+#     fi
+# }
 
 
 
 
 
-
-# Define a function to verify that firewall rules are configured for open ports
-function ip6_firewll_rule_exist {
-    # name of the audit
-    audit_name="Ensure ip6tables firewall rules exist for all open ports"
+# ############################################# 3.5.3.3.4 Ensure ip6tables firewall rules exist for all open ports ##########################################
 
 
-    ip6_disable() {
-        # Initialize an empty string to store IPv6 disabled messages
-        output1=""
 
-        # Check if IPv6 is disabled in grub config
-        grubfile="$(find -L /boot -name 'grub.cfg' -type f)"
-        if [ -f "$grubfile" ] && ! grep "^\s*linux" "$grubfile" | grep -vq ipv6.disable=1; then
-            output1+="ipv6 disabled in grub config\n"
-        fi
 
-        # Check if IPv6 is disabled in sysctl config files
-        if grep -Eqs "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
-        grep -Eqs "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
-        sysctl net.ipv6.conf.all.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" &&
-        sysctl net.ipv6.conf.default.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b"; then
-            output1+="ipv6 disabled in sysctl config\n"
-        fi
+
+
+# # Define a function to verify that firewall rules are configured for open ports
+# function ip6_firewll_rule_exist {
+#     # name of the audit
+#     audit_name="Ensure ip6tables firewall rules exist for all open ports"
+
+
+#     ip6_disable() {
+#         # Initialize an empty string to store IPv6 disabled messages
+#         output1=""
+
+#         # Check if IPv6 is disabled in grub config
+#         grubfile="$(find -L /boot -name 'grub.cfg' -type f)"
+#         if [ -f "$grubfile" ] && ! grep "^\s*linux" "$grubfile" | grep -vq ipv6.disable=1; then
+#             output1+="ipv6 disabled in grub config\n"
+#         fi
+
+#         # Check if IPv6 is disabled in sysctl config files
+#         if grep -Eqs "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
+#         grep -Eqs "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b" /etc/sysctl.conf /etc/sysctl.d/*.conf /usr/lib/sysctl.d/*.conf /run/sysctl.d/*.conf &&
+#         sysctl net.ipv6.conf.all.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.all\.disable_ipv6\s*=\s*1\b" &&
+#         sysctl net.ipv6.conf.default.disable_ipv6 | grep -Eq "^\s*net\.ipv6\.conf\.default\.disable_ipv6\s*=\s*1\b"; then
+#             output1+="ipv6 disabled in sysctl config\n"
+#         fi
         
-        # print results
-        if [ -n "$output1" ]; then
-            echo -e "\n\e[32mAudit PASS\e[0m [Name - $audit_name]\n"
-            echo -e "Reason(s) for success:\n"
-            echo -e "$output1"
-        else 
-            echo -e "\n\e[91mAudit FAIL\e[0m [Name - $audit_name]\n"
-            echo -e "Reason(s) for failure:\n"
-            echo -e "IPv6 is enabled on the system\n"
-        fi
-    }
+#         # print results
+#         if [ -n "$output1" ]; then
+#             echo -e "\n\e[32mAudit PASS\e[0m [Name - $audit_name]\n"
+#             echo -e "Reason(s) for success:\n"
+#             echo -e "$output1"
+#         else 
+#             echo -e "\n\e[91mAudit FAIL\e[0m [Name - $audit_name]\n"
+#             echo -e "Reason(s) for failure:\n"
+#             echo -e "IPv6 is enabled on the system\n"
+#         fi
+#     }
 
 
 
-    # Get list of open ports with protocol
-    open_ports=$(ss -6tuln | awk '{print $1":"$4":"$5}')
+#     # Get list of open ports with protocol
+#     open_ports=$(ss -6tuln | awk '{print $1":"$4":"$5}')
 
-    # Loop through each open port and protocol
-    for line in $open_ports;do
-    #echo "$line"
-    # Extract protocol, port number (local and remote)
-    protocol=$(echo $line | cut -d ':' -f 1)
-    #echo "$protocol"
-    port=$(echo $line | cut -d ':' -f 6)
+#     # Loop through each open port and protocol
+#     for line in $open_ports;do
+#     #echo "$line"
+#     # Extract protocol, port number (local and remote)
+#     protocol=$(echo $line | cut -d ':' -f 1)
+#     #echo "$protocol"
+#     port=$(echo $line | cut -d ':' -f 6)
     
     
-    # Check firewall rule (unchanged)
-    rule_exists=$(sudo ip6tables -L INPUT -v -n | grep "dpt:$port" | wc -l)
+#     # Check firewall rule (unchanged)
+#     rule_exists=$(sudo ip6tables -L INPUT -v -n | grep "dpt:$port" | wc -l)
 
-    # Print information (modified)
-    if [ $rule_exists -eq 0 ] && [ -n "$port" ]; then   
-        message+="No firewall rule for port $port (protocol: $protocol)"$'\n'
-    fi
-    done
+#     # Print information (modified)
+#     if [ $rule_exists -eq 0 ] && [ -n "$port" ]; then   
+#         message+="No firewall rule for port $port (protocol: $protocol)"$'\n'
+#     fi
+#     done
 
 
-    if [ -z "$message" ]; then
-        echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
-    else
-        # call function to verify ipv6 is disables
-        ip6_disable
-    fi
+#     if [ -z "$message" ]; then
+#         echo -e "\n\e[32mAUDIT PASS\e[0m [Name - $audit_name]\n"
+#     else
+#         # call function to verify ipv6 is disables
+#         ip6_disable
+#     fi
 
-}
+# }
+
+
+
+
+
+
+
+
+
+# ###############################################################################################################################################################################
+# ###############################################################################################################################################################################
+# ###################################################################################################################################################################################
+# ################################################################# 3.5.1.1 Ensure ufw is installed #################################################################################
+
+
+# function ufw_ins {
+
+#     # Use dpkg-query to check the status of the ufw package
+#     local status=$(dpkg-query -W -f='${Status}' ufw 2>/dev/null)
+    
+#     # Check if the status contains "installed" substring
+#     if [[ "$status" == *"installed"* ]]; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw is installed]\n"
+#     else
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - UFW is not installed]\n"
+#     fi
+# }
+
+
+
+
+
+# ######################################################### 3.5.1.2 Ensure iptables-persistent is not installed with ufw ########################################################
+
+
+
+
+
+# function ip_tbl_persis {
+#     # Execute dpkg-query command to check the status of the iptables-persistent package
+#     dpkg-query -s iptables-persistent &>/dev/null
+    
+#     # Check the exit status of the dpkg-query command
+#     if [[ $? -ne 0 ]]; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure iptables-persistent is not installed with ufw]\n"
+#     else
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure iptables-persistent is not installed with ufw]\n"
+#     fi
+# }
+
+
+
+
+
+
+# ######################################################### 3.5.1.3 Ensure ufw service is enabled ##############################################################################
+
+
+
+
+
+
+# function ufw_enable {
+#     # Check if UFW daemon is enabled using systemctl 
+#     # then verify that the ufw daemon is active
+#     # then ufw is active
+#     if [ "$(systemctl is-enabled ufw.service)" = "enabled" ] && \
+#        [ "$(systemctl is-active ufw)" = "active" ] && \
+#        [ "$(ufw status | grep Status)" = "Status: active" ]; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw service is enabled]\n"  # If all checks pass, UFW is enabled
+#     else
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw service is enabled]\n"  # If any check fails, UFW is not enabled
+#     fi
+# }
+
+
+
+
+
+# ############################################################ 3.5.1.4 Ensure ufw loopback traffic is configured #################################################################
+
+
+
+
+
+# # Define a function named verify_ufw_rules
+# function ufw_lback_traf {
+#     # Run the ufw status verbose command and store the output in the variable ufw_status_output
+#     ufw_status_output=$(ufw status verbose)
+
+#     # Define an array named expected_rules to hold the expected rules in the format "From To Action"
+#     expected_rules=(
+#         "Anywhere on lo             ALLOW IN    Anywhere"
+#         "Anywhere                   DENY IN     127.0.0.0/8"
+#         "Anywhere (v6) on lo        ALLOW IN    Anywhere (v6)"
+#         "Anywhere (v6)              DENY IN     ::1"
+#         "Anywhere                   ALLOW OUT   Anywhere on lo "
+#         "Anywhere (v6)              ALLOW OUT   Anywhere (v6) on lo"
+#     )
+
+#     # Initialize a variable to store missing rules
+#     missing_rules=""
+
+#     # Iterate over each expected rule
+#     for rule in "${expected_rules[@]}"; do
+#         # Check if the current rule exists in the output of ufw status verbose command
+#         if ! grep -q "$rule" <<< "$ufw_status_output"; then
+#             # Append the missing rule to the variable missing_rules
+#             missing_rules+="$rule\n"
+#         fi
+#     done
+
+#     # Check if any expected rules are missing
+#     if [ -n "$missing_rules" ]; then
+#         # Print a message indicating the missing rules
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw loopback traffic is configured]"
+#         echo -e "\nMissing Rules:\n"
+#         echo -e "$missing_rules" | while IFS= read -r line; do echo "$line"; done
+#         # Return with a non-zero exit status to indicate verification failure
+#         return 1
+#     else
+#         # If all expected rules are found, print a success message
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw service is enabled]\n"
+#     fi
+# }
+
+
+
+
+
+
+# ############################################################# 3.5.1.5 Ensure ufw outbound connections are configured ##############################################################
+
+
+
+
+
+# # Define a function to verify ufw rules for outbound connections
+# function ufw_outbound_conf {
+#     # Run ufw status numbered command and filter the output to show only rules for outbound connections
+#     ufw_status=$(ufw status numbered | grep -E 'ALLOW OUT')
+
+#     # Check if there are any rules allowing outbound connections
+#     if [ -n "$ufw_status" ]; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw outbound connections are configured]\n"
+#     else
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw outbound connections are configured]\n"
+#         echo -e "Reason(s) for failure:\n"
+#         echo -e "No rules found for new outbound connections or they don't match the site policy\n"
+#     fi
+# }
+
+
+
+
+
+
+# ################################################################ 3.5.1.6 Ensure ufw firewall rules exist for all open ports ##########################################################
+
+
+
+
+
+# # Define a function to check for missing firewall rules in ufw configuration
+# function mis_firewall_rules {
+#     # Store the verbose output of 'ufw status' command in the variable ufw_out
+#     ufw_out="$(ufw status verbose)"
+
+#     # Use 'ss' to list all listening TCP and UDP sockets excluding localhost and loopback addresses,
+#     # extract the port numbers, sort them, and remove duplicates
+#     ports=$(ss -tuln | awk '($5!~/%lo:/ && $5!~/127.0.0.1:/ && $5!~/::1/) {split($5, a, ":"); print a[2]}' | sort | uniq)
+    
+#     mis_rules="" #empty varible to store missing rules
+#     found_missing_rule=false # Initialize a flag to indicate if any missing rule is found
+    
+#     # Iterate over each extracted port number
+#     for lpn in $ports; do
+#         # Check if the port number has a corresponding firewall rule in ufw_out
+#         if ! grep -Pq "^\h*$lpn\b" <<< "$ufw_out"; then
+#             # Append the missing rule to the variable missing_rules
+#             mis_rules+="$lpn\n"
+#             # Set the flag to indicate a missing rule is found
+#             found_missing_rule=true
+#         fi
+#     done
+    
+#     # Check if any missing rule is found
+#     if ! "$found_missing_rule"; then
+#         # If no missing rule is found, print an "Audit PASS" message
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw firewall rules exist for all open ports]\n"
+#     else
+#         # If any missing rule is found, print an "Audit FAIL" message
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw firewall rules exist for all open ports]"
+#         echo -e "\nPorts missing Rules:\n"
+#         echo -e "$mis_rules" | while IFS= read -r line; do echo "$line"; done
+#     fi
+# }
+
+
+
+
+
+
+# ############################################################### 3.5.1.7 Ensure ufw default deny firewall policy #####################################################################
+
+
+
+
+
+# # Define a function to verify default UFW policies
+# function ufw_deny_policies {
+#     # Run the ufw status verbose command and filter for lines containing "Default:"
+#     default_policies=$(ufw status verbose | grep Default:)
+
+#     # Check if the default policies are set to deny for incoming, outgoing, and routed traffic
+#     if echo "$default_policies" | grep -q "Default: deny (incoming), deny (outgoing), disabled (routed)"; then
+#         echo -e "\n\e[32mAudit PASS\e[0m [Name - Ensure ufw default deny firewall policy]\n"
+#     else
+#         echo -e "\n\e[91mAudit FAIL\e[0m [Name - Ensure ufw default deny firewall policy]\n"
+#     fi
+# }
+
+
+
+
+
+
+# # ############################################################################################################################################
+
+IPv6_status 
+wireless_int_check 
+packet_re_send
+ip_forwrd_dis
+source_rt_pac       
+icmp_redirect
+sec_icmp_redirect   
+packt_log           
+brodcst_icmp   
+bogus_icmp        
+rvrs_path_filtr   
+tcp_syn_cookies   
+IPv6_router_ad    
+dccp_disbl
+sctp_disbl
+rds_disbl
+tipc_disbl
+    
+nftabls_install
+ufw_status
+iptabl_flush     
+nftabl_exist     
+base_chains_exist
+loopback_int
+est_connections       
+nft_deny_polic 
+nftables_enabled         
+nft_ruls_perme
+

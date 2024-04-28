@@ -889,101 +889,7 @@ function tipc_disbl_reme {
 
 
 
-####################################################################################################################################################################################
-####################################################################################################################################################################################
-################################################################### ufw configuration #########################################################################################
-
-
-
-function ufw_conf {
-
-    sudo apt update
-    sudo apt install ufw # command to install ufw
-
-    apt purge iptables-persistent # code to remove iptable persistent package
-
-
-    # Unmask the ufw daemon
-    systemctl unmask ufw.service
-    # Enable and start the ufw daemon
-    systemctl --now enable ufw.service
-    # Enable ufw
-    ufw enable
-
-
-    # Allow incoming and outgoing traffic on loopback interface
-    ufw allow in on lo
-    ufw allow out on lo
-    # Deny incoming traffic from loopback addresses
-    ufw deny in from 127.0.0.0/8
-    ufw deny in from ::1
-
-    echo -e "\n\e[33mManual process required [Name - Ensure ufw outbound connections are configured]\n\e[0m"
-    echo -e "\nConfigure ufw in accordance with site policy.\nCurrently all outbound connections on all interfaces will be allowed."
-    ufw allow out on all
-
-
-    function mis_firewall_rules_reme {
-
-        # Store the verbose output of 'ufw status' command in the variable ufw_out
-        ufw_out="$(ufw status verbose)"
-
-        # Use 'ss' to list all listening TCP and UDP sockets excluding localhost and loopback addresses,
-        # extract the port numbers, sort them, and remove duplicates
-        ports=$(ss -tuln | awk '($5!~/%lo:/ && $5!~/127.0.0.1:/ && $5!~/::1/) {split($5, a, ":"); print a[2]}' | sort | uniq)
-            
-        mis_rules="" # Empty variable to store missing rules
-        found_missing_rule=false # Initialize a flag to indicate if any missing rule is found
-
-        # Iterate over each extracted port number
-        for lpn in $ports; do
-            # Check if the port number has a corresponding firewall rule in ufw_out
-            if ! grep -Pq "^\h*$lpn\b" <<< "$ufw_out"; then
-                # Append the missing rule to the variable missing_rules
-                mis_rules+="$lpn "
-                # Set the flag to indicate a missing rule is found
-                found_missing_rule=true
-            fi
-        done
-
-        # Split the mis_rules variable by spaces
-        read -r -a ports_array <<< "$mis_rules"
-
-        # Iterate over each port in the array
-        for port in "${ports_array[@]}"; do
-            # Check if the port is a valid number
-            if [[ "$port" =~ ^[0-9]+$ ]]; then
-                # Allow traffic on the port using ufw for both TCP and UDP protocols
-                sudo ufw allow in "$port/tcp"
-                sudo ufw allow in "$port/udp"
-            else
-                echo "ERROR: Bad port - $port"
-            fi
-        done
-
-
-    }
-    mis_firewall_rules_reme 
-
-
-    ufw allow git 
-    ufw allow in http 
-    ufw allow out http 
-    ufw allow in https 
-    ufw allow out https 
-    ufw allow out 53 
-    ufw logging on
-    ufw allow ssh
-
-    # Set default deny rules for incoming, outgoing, and routed traffic
-    sudo ufw default deny incoming
-    sudo ufw default deny outgoing
-    sudo ufw default deny routed
-
-    # Enable the UFW firewall
-    sudo ufw enable
-}
-
+# 
 
 
 ####################################################################################################################################################################################
@@ -1074,137 +980,271 @@ EOF
 
 
 
+
+
+
+
+
+
+# ####################################################################################################################################################################################
+# ####################################################################################################################################################################################
+# ####################################################################################################################################################################################
+# ################################################################### ufw configuration #########################################################################################
+
+
+
+# function ufw_conf {
+
+#     sudo apt update
+#     sudo apt install ufw # command to install ufw
+
+#     apt purge iptables-persistent # code to remove iptable persistent package
+
+
+#     # Unmask the ufw daemon
+#     systemctl unmask ufw.service
+#     # Enable and start the ufw daemon
+#     systemctl --now enable ufw.service
+#     # Enable ufw
+#     ufw enable
+
+
+#     # Allow incoming and outgoing traffic on loopback interface
+#     ufw allow in on lo
+#     ufw allow out on lo
+#     # Deny incoming traffic from loopback addresses
+#     ufw deny in from 127.0.0.0/8
+#     ufw deny in from ::1
+
+#     echo -e "\n\e[33mManual process required [Name - Ensure ufw outbound connections are configured]\n\e[0m"
+#     echo -e "\nConfigure ufw in accordance with site policy.\nCurrently all outbound connections on all interfaces will be allowed."
+#     ufw allow out on all
+
+
+#     function mis_firewall_rules_reme {
+
+#         # Store the verbose output of 'ufw status' command in the variable ufw_out
+#         ufw_out="$(ufw status verbose)"
+
+#         # Use 'ss' to list all listening TCP and UDP sockets excluding localhost and loopback addresses,
+#         # extract the port numbers, sort them, and remove duplicates
+#         ports=$(ss -tuln | awk '($5!~/%lo:/ && $5!~/127.0.0.1:/ && $5!~/::1/) {split($5, a, ":"); print a[2]}' | sort | uniq)
+            
+#         mis_rules="" # Empty variable to store missing rules
+#         found_missing_rule=false # Initialize a flag to indicate if any missing rule is found
+
+#         # Iterate over each extracted port number
+#         for lpn in $ports; do
+#             # Check if the port number has a corresponding firewall rule in ufw_out
+#             if ! grep -Pq "^\h*$lpn\b" <<< "$ufw_out"; then
+#                 # Append the missing rule to the variable missing_rules
+#                 mis_rules+="$lpn "
+#                 # Set the flag to indicate a missing rule is found
+#                 found_missing_rule=true
+#             fi
+#         done
+
+#         # Split the mis_rules variable by spaces
+#         read -r -a ports_array <<< "$mis_rules"
+
+#         # Iterate over each port in the array
+#         for port in "${ports_array[@]}"; do
+#             # Check if the port is a valid number
+#             if [[ "$port" =~ ^[0-9]+$ ]]; then
+#                 # Allow traffic on the port using ufw for both TCP and UDP protocols
+#                 sudo ufw allow in "$port/tcp"
+#                 sudo ufw allow in "$port/udp"
+#             else
+#                 echo "ERROR: Bad port - $port"
+#             fi
+#         done
+
+
+#     }
+#     mis_firewall_rules_reme 
+
+
+#     ufw allow git 
+#     ufw allow in http 
+#     ufw allow out http 
+#     ufw allow in https 
+#     ufw allow out https 
+#     ufw allow out 53 
+#     ufw logging on
+#     ufw allow ssh
+
+#     # Set default deny rules for incoming, outgoing, and routed traffic
+#     sudo ufw default deny incoming
+#     sudo ufw default deny outgoing
+#     sudo ufw default deny routed
+
+#     # Enable the UFW firewall
+#     sudo ufw enable
+# }
+
+
+
+
+
+
+
+
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
 ############################################################################  iptables configuration ##########################################################
 
 
-function iptables_softwar_conf {
+# function iptables_softwar_conf {
 
-    # install iptables and iptables-persistent
-    apt install iptables iptables-persistent
+#     # install iptables and iptables-persistent
+#     apt install iptables iptables-persistent
 
-    # remove nftables
-    apt purge nftables
+#     # remove nftables
+#     apt purge nftables
 
-    # disable ufw
-    ufw disable 
-    systemctl stop ufw 
-    systemctl mask ufw
+#     # disable ufw
+#     ufw disable 
+#     systemctl stop ufw 
+#     systemctl mask ufw
 
-}
-
-
-######################################################################## Configure IPv4 iptables #####################################################################
+# }
 
 
+# ######################################################################## Configure IPv4 iptables #####################################################################
 
 
 
-function ipv4_tables_conf {
-
-    # Flush IPtables rules
-    iptables -F
-
-    # Ensure default deny firewall policy
-    iptables -P INPUT DROP
-    iptables -P OUTPUT DROP
-    iptables -P FORWARD DROP
-
-    # Ensure loopback traffic is configured
-    iptables -A INPUT -i lo -j ACCEPT
-    iptables -A OUTPUT -o lo -j ACCEPT
-    iptables -A INPUT -s 127.0.0.0/8 -j DROP
-
-    # Ensure outbound and established connections are configured
-    iptables -A OUTPUT -p tcp -m state --state NEW,ESTABLISHED -j ACCEPT
-    iptables -A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT
-    iptables -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED -j ACCEPT
-    iptables -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
-    iptables -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
-    iptables -A INPUT -p icmp -m state --state ESTABLISHED -j ACCEPT
-
-    # Open inbound ssh(tcp port 22) connections
-    iptables -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
 
 
-    # Get list of open ports with protocol
-    open_ports=$(ss -4tuln | awk '{print $1":"$4":"$5}')
+# function ipv4_tables_conf {
 
-    # Loop through each open port and protocol
-    for line in $open_ports; do
-    # Extract protocol, port number (local and remote)
-        protocol=$(echo $line | cut -d ':' -f 1)
+#     # Flush IPtables rules
+#     iptables -F
 
-        port=$(echo $line | cut -d ':' -f 4)
+#     # Ensure default deny firewall policy
+#     iptables -P INPUT DROP
+#     iptables -P OUTPUT DROP
+#     iptables -P FORWARD DROP
+
+#     # Ensure loopback traffic is configured
+#     iptables -A INPUT -i lo -j ACCEPT
+#     iptables -A OUTPUT -o lo -j ACCEPT
+#     iptables -A INPUT -s 127.0.0.0/8 -j DROP
+
+#     # Ensure outbound and established connections are configured
+#     iptables -A OUTPUT -p tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+#     iptables -A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT
+#     iptables -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED -j ACCEPT
+#     iptables -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
+#     iptables -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
+#     iptables -A INPUT -p icmp -m state --state ESTABLISHED -j ACCEPT
+
+#     # Open inbound ssh(tcp port 22) connections
+#     iptables -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
+
+
+#     # Get list of open ports with protocol
+#     open_ports=$(ss -4tuln | awk '{print $1":"$4":"$5}')
+
+#     # Loop through each open port and protocol
+#     for line in $open_ports; do
+#     # Extract protocol, port number (local and remote)
+#         protocol=$(echo $line | cut -d ':' -f 1)
+
+#         port=$(echo $line | cut -d ':' -f 4)
         
-        # Check firewall rule (unchanged)
-        rule_exists=$(sudo iptables -L INPUT -v -n | grep "dpt:$port" | wc -l)
+#         # Check firewall rule (unchanged)
+#         rule_exists=$(sudo iptables -L INPUT -v -n | grep "dpt:$port" | wc -l)
 
-        # remidiation
-        if [ $rule_exists -eq 0 ] && [ -n "$port" ]; then
-            iptables -A INPUT -p $protocol --dport $port -m state --state NEW -j ACCEPT
-        fi
+#         # remidiation
+#         if [ $rule_exists -eq 0 ] && [ -n "$port" ]; then
+#             iptables -A INPUT -p $protocol --dport $port -m state --state NEW -j ACCEPT
+#         fi
     
-    done
+#     done
 
-}
-
-
-
-
-
-######################################################################## Configure IPv6 iptables #####################################################################
+# }
 
 
 
 
-function ipv6_tables_conf {
 
-    # Flush ip6tables rules
-    ip6tables -F
-
-    # Ensure default deny firewall policy
-    ip6tables -P INPUT DROP
-    ip6tables -P OUTPUT DROP
-    ip6tables -P FORWARD DROP
-
-    # Ensure loopback traffic is configured
-    ip6tables -A INPUT -i lo -j ACCEPT
-    ip6tables -A OUTPUT -o lo -j ACCEPT
-    ip6tables -A INPUT -s ::1 -j DROP
-
-    # Ensure outbound and established connections are configured
-    ip6tables -A OUTPUT -p tcp -m state --state NEW,ESTABLISHED -j ACCEPT
-    ip6tables -A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT
-    ip6tables -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED -j ACCEPT
-    ip6tables -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
-    ip6tables -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
-    ip6tables -A INPUT -p icmp -m state --state ESTABLISHED -j ACCEPT
-
-    # Open inbound ssh(tcp port 22) connections
-    ip6tables -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
+# ######################################################################## Configure IPv6 iptables #####################################################################
 
 
 
-    # Get list of open ports with protocol
-    open_ports=$(ss -6tuln | awk '{print $1":"$4":"$5}')
 
-    # Loop through each open port and protocol
-    for line in $open_ports; do
-        # Extract protocol, port number (local and remote)
-        protocol=$(echo $line | cut -d ':' -f 1)
+# function ipv6_tables_conf {
 
-        port=$(echo $line | cut -d ':' -f 6)
+#     # Flush ip6tables rules
+#     ip6tables -F
+
+#     # Ensure default deny firewall policy
+#     ip6tables -P INPUT DROP
+#     ip6tables -P OUTPUT DROP
+#     ip6tables -P FORWARD DROP
+
+#     # Ensure loopback traffic is configured
+#     ip6tables -A INPUT -i lo -j ACCEPT
+#     ip6tables -A OUTPUT -o lo -j ACCEPT
+#     ip6tables -A INPUT -s ::1 -j DROP
+
+#     # Ensure outbound and established connections are configured
+#     ip6tables -A OUTPUT -p tcp -m state --state NEW,ESTABLISHED -j ACCEPT
+#     ip6tables -A OUTPUT -p udp -m state --state NEW,ESTABLISHED -j ACCEPT
+#     ip6tables -A OUTPUT -p icmp -m state --state NEW,ESTABLISHED -j ACCEPT
+#     ip6tables -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
+#     ip6tables -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
+#     ip6tables -A INPUT -p icmp -m state --state ESTABLISHED -j ACCEPT
+
+#     # Open inbound ssh(tcp port 22) connections
+#     ip6tables -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
+
+
+
+#     # Get list of open ports with protocol
+#     open_ports=$(ss -6tuln | awk '{print $1":"$4":"$5}')
+
+#     # Loop through each open port and protocol
+#     for line in $open_ports; do
+#         # Extract protocol, port number (local and remote)
+#         protocol=$(echo $line | cut -d ':' -f 1)
+
+#         port=$(echo $line | cut -d ':' -f 6)
         
-        # Check firewall rule (unchanged)
-        rule_exists=$(sudo ip6tables -L INPUT -v -n | grep "dpt:$port" | wc -l)
+#         # Check firewall rule (unchanged)
+#         rule_exists=$(sudo ip6tables -L INPUT -v -n | grep "dpt:$port" | wc -l)
 
-        # remidiation
-        if [ $rule_exists -eq 0 ] && [ -n "$port" ]; then 
-            ip6tables -A INPUT -p $protocol --dport $port -m state --state NEW -j ACCEPT
-        fi
+#         # remidiation
+#         if [ $rule_exists -eq 0 ] && [ -n "$port" ]; then 
+#             ip6tables -A INPUT -p $protocol --dport $port -m state --state NEW -j ACCEPT
+#         fi
     
-    done
+#     done
 
-}
+# }
+
+
+
+
+
+
+IPv6_status_reme 
+wireless_int_check_reme
+packet_re_send_reme 
+ip_forwrd_dis_reme 
+source_rt_pac_reme 
+icmp_redirect_reme
+sec_icmp_redirect  
+packt_log_reme    
+brodcst_icmp_reme
+bogus_icmp_reme    
+rvrs_path_filtr_reme  
+tcp_syn_cookies_reme   
+IPv6_router_ad_reme    
+dccp_disbl_reme
+sctp_disbl_reme
+rds_disbl_reme 
+tipc_disbl_reme
+
+nftables_conf
