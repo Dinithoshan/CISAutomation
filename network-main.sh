@@ -33,6 +33,7 @@ source config.sh
     ufw_deny_policies
 
     # # ############################################################## Configure nftables section ##############################################################
+    ##This is better
 
     nftabls_install
     ufw_status

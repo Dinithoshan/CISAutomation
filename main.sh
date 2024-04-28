@@ -6,8 +6,8 @@ INITIAL_AUDIT="./initial-setup-main-audit.sh"
 INITIAL_CONFIG="./initial-setup-main-config.sh"
 SERVICES_AUDIT="./services-main-audit.sh"
 SERVICES_CONFIG="./services-main-config.sh"
-NETWORK_AUDIT="./network-main-audit.sh"
-NETWORK_CONFIG="./network-main-config.sh"
+# NETWORK_AUDIT="./network-main-audit.sh"
+# NETWORK_CONFIG="./network-main-config.sh"
 RUN_ROLLBACK="./rollback-main.sh"
 INSTALLATION="./installation-main.sh"
 
@@ -77,7 +77,7 @@ if [ "$EUID" -ne 0 ]; then
     echo "Script is not running as root."
 else
     # Process command line options
-    while getopts "lLiIsSnNhrRx" opt; do
+    while getopts "lLiIsShrRx" opt; do
         case $opt in
             l)
                 execute_log_audit
@@ -97,12 +97,12 @@ else
             S)
                 execute_services_config
                 ;;
-            n)
-                execute_network_audit
-                ;;
-            N)
-                execute_network_config
-                ;;
+            # n)
+            #     execute_network_audit
+            #     ;;
+            # N)
+            #     execute_network_config
+            #     ;;
             h)
                 displayhelp
                 ;;
