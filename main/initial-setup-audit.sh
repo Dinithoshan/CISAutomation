@@ -1564,4 +1564,3 @@ audit_updates_installed() {
         echo "Audit: PASS"
     fi
 }
-

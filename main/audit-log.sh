@@ -289,7 +289,7 @@ function check-file-system-mounts() {
     fi
 
 
-    if [ -s temp.txt]; then
+    if [ -s temp.txt ]; then
         echo "Audit passed: File system mounts are logged"
     else
         echo "Audit Failede: File system mounts are not logged"
@@ -326,7 +326,7 @@ function check-audit-login-logout {
     &&/ +-p *wa/ \
     &&(/ key= *[!-~]* *$/||/ -k *[!-~]* *$/)' /etc/audit/rules.d/*.rules >> temp.txt
 
-    if [ -s temp.txt]; then
+    if [ -s temp.txt ]; then
         echo "Audit passed: Login logout are logged"
     else
         echo "Audit Failed: login logout are not logged"
