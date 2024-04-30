@@ -35,5 +35,7 @@ Flags:
     -N :Configures Network configurations on the system.
     -x :Installs necessary dependant packages for the tool and grants file permissions for the necessary scripts.
     -r :Take a snapshot of the system configuration, This will be utlized as a backup of the system configuration of the device to rollback into this configuration in case of unexpected results.
-    -R :Rollback to the previous state before the configuration changes. 
+    -R :Rollback to the previous state before the configuration changes.
+    -m :Audits system maintenance.
+    -m :onfigures system maintenance.
     -h :Displays this help message.

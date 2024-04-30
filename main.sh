@@ -93,31 +93,31 @@ else
     while getopts "lLiIsSnNmMhrRx" opt; do
         case $opt in
             l)
-                execute_log_audit >> log-audit-results.txt
+                execute_log_audit >> 'results/log-audit-results.txt'
                 ;;
             L)
                 execute_log_config                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            te_log_config
                 ;;
             i)
-                execute_initial_audit >> initial-audit-results.txt
+                execute_initial_audit >> 'results/initial-audit-results.txt'
                 ;;
             I)
                 execute_initial_config
                 ;;
             s)
-                execute_services_audit >> services-audit-results.txt
+                execute_services_audit >> 'results/services-audit-results.txt'
                 ;;
             S)
                 execute_services_config
                 ;;
             n)
-                execute_network_audit >> network-audit-results.txt
+                execute_network_audit >> 'results/network-audit-results.txt'
                 ;;
             N)
                 execute_network_config
                 ;;
             m)
-                execute_system_maintenance_audit >> system-maintenance-audit-results.txt
+                execute_system_maintenance_audit >> 'results/system-maintenance-audit-results.txt'
                 ;;
             M)
                 execute_system_maintenance_config

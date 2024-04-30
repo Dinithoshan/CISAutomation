@@ -3,7 +3,8 @@
 source ssh-config.sh
 
 function remote-installation() {
-    scp -r main $USERNAME@$IP:/home/$USERNAME
+    sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "cd /home/$USERNAME/ && mkdir CISBOT"
+    scp -r * $USERNAME@$IP:/home/$USERNAME/CISBOT
     sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "$INSTALL_COMMAND"
 }
 
@@ -27,6 +28,10 @@ function remote-logging-audit() {
     sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "$LOGGING_AUDIT_COMMAND"
 }
 
+function remote-logging-config() {
+    sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "$LOGGING_CONFIG_COMMAND"
+}
+
 function remote-initial-setup-audit() {
     sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "$INITIAL_SETUP_AUDIT_COMMAND"
 }
@@ -40,5 +45,23 @@ function remote-services-audit() {
 }
 
 function remote-services-config() {
-    sshpass -p $PASSWORD ssh -p 22 $USERNAME@$IP "$SERVICES_CONFIG_COMMAND"
+    sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "$SERVICES_CONFIG_COMMAND"
 }
+
+
+function remote-system-maintenance-audit() {
+    sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "$SMAINTENANCE_AUDIT_COMMAND"
+}
+
+function remote-system-maintenance-config() {
+    sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "$SMAINTENANCE_CONFIG_COMMAND"
+}
+
+
+
+remote-installation
+remote-set-rollback
+remote-network-audit
+remote-logging-audit
+remote-initial-setup-audit
+remote-services-audit

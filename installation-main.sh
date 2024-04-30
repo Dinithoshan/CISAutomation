@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir results
 sudo apt install expect
 sudo apt install timeshift
 sudo apt install sshpass
