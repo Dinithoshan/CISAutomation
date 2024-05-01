@@ -85,12 +85,42 @@ function execute_installation() {
     echo "Installation Complete."
 }
 
+function report_back() {
+    mkdir -p results && cd results
+    total_passed=0
+    total_failed=0
+    filenames=(
+        "initial-audit-results.txt"
+        "log-audit-results.txt"
+        "network-audit-results.txt"
+        "services-audit-results.txt"
+        "system-maintenance-audit-results.txt"
+    )
+    for filename in "${filenames[@]}"; do
+        echo "Findings: $filename"
+        audit_passed=$(grep -Eio "Audit Passed|Audit:.*PASS|Audit PASS" "$filename" | wc -l)
+        audit_failed=$(grep -Eio "Audit Failed|Audit:.*FAIL|Audit FAIL" "$filename" | wc -l)
+        ((total_passed += audit_passed))
+        ((total_failed += audit_failed))
+        echo "Audit Passed: $audit_passed"
+        echo "Audit Failed: $audit_failed"
+    done
+    echo "---------------------------------"
+    echo "Total passed: $total_passed"
+    echo "Total Failed: $total_failed"
+    echo "---------------------------------"
+    total_scripts=$((total_passed + total_failed))
+    cis_compliance=$(awk "BEGIN {printf \"%.2f\", ($total_passed / $total_scripts) * 100}")
+    echo 'Remote System '$cis_compliance'% Secure according to standards.'
+}
+
 # Check if the script is not being run as root
 if [ "$EUID" -ne 0 ]; then
     echo "Script is not running as root."
 else
+    mkdir -p results
     # Process command line options
-    while getopts "lLiIsSnNmMhrRx" opt; do
+    while getopts "lLiIsSnNmMhrRxz" opt; do
         case $opt in
             l)
                 execute_log_audit >> 'results/log-audit-results.txt'
@@ -134,6 +164,9 @@ else
                 ;;
             x)
                 execute_installation
+                ;;
+            z)
+                report_back
                 ;;
             \?)
                 echo "Invalid Option: -$OPTARG" >&2

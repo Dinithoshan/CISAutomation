@@ -85,7 +85,6 @@ function remote-report-back() {
     total_scripts=$((total_passed + total_failed))
     cis_compliance=$(awk "BEGIN {printf \"%.2f\", ($total_passed / $total_scripts) * 100}")
     echo 'Remote System '$cis_compliance'% Secure according to standards.'
-    rm -r $PATH_TO_LOCAL_DIRECTORY/results
 }
 
 
@@ -97,18 +96,18 @@ while getopts "iacrR" opt; do
             remote-set-rollback
             ;;
         a)
-            remote-network-audit
+            # remote-network-audit
             remote-logging-audit
-            remote-initial-setup-audit
-            remote-services-audit
-            remote-system-maintenance-audit
+            # remote-initial-setup-audit
+            # remote-services-audit
+            # remote-system-maintenance-audit
             ;;
         c)
-            remote-network-config
+            # remote-network-config
             remote-logging-config
-            remote-initial-setup-config
-            remote-services-config
-            remote-system-maintenance-config
+            # remote-initial-setup-config
+            # remote-services-config
+            # remote-system-maintenance-config
             ;;
         r)
             remote-report-back
