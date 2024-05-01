@@ -39,3 +39,22 @@ Flags:
     -m :Audits system maintenance.
     -m :onfigures system maintenance.
     -h :Displays this help message.
+
+
+
+###User Guide for Remote management within the tool.
+
+Before the use of the tool Navigate to the ssh-config file and change that values of the Config.
+USERNAME=              [The user set up on the remote system with administrative privileges with passwordless authentication already setted up to run sudo commands without prompting for a password]
+PASSWORD=              [password of the above user for authentication]
+IP=                    [An accessible IP address of the remote system]
+PORT=22                [THe port in which SSH service is listening on (doesnt necessarily have to be port 22)]
+PATH_TO_LOCAL_DIRECTORY=            [Path where remote system reports back to] eg: '/home/ubuntu/Desktop': will save all findings in the desktop
+
+
+Flags must be passed as arguments alongside the execution of the tool.
+Flags for remote configuration
+      -i :installs the necessary dependancies in the remote system
+      -a :Runs all audit scripts in the remote systems
+      -c :Runs Configuration scripts in the remote systems
+      -r :Reports back to the host machine on the findings

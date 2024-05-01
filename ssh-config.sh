@@ -4,7 +4,7 @@
 #VARIABELES
 USERNAME='administrator' #user account is already set up
 PASSWORD='admin@1234'
-IP='192.168.1.11' #local IP used for demo purpose
+IP='192.168.1.5' #local IP used for demo purpose
 PORT=22 #Need to change this variable if a different port is being used to listen for SSH  traffic
 PATH_TO_LOCAL_DIRECTORY='/home/ubuntu/Desktop' #Local path where remotely execute files report back
 
