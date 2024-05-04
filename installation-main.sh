@@ -1,6 +1,9 @@
 #!/bin/bash
+source ssh-config.sh
 
-mkdir results
+
+mkdir -p results
+cp ssh-config.sh results
 sudo apt install expect
 sudo apt install timeshift
 sudo apt install sshpass

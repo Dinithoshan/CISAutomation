@@ -359,7 +359,7 @@ mail_transfer () {
 
     mail_transfer_output=$(ss -lntu | grep -E ':25\s' | grep -E -v '\s(127.0.0.1|::1):25\s')   # Checks if mail transfer agent is configured for local-only mode 
 
-    if [ -z $mail_transfer_output ] ; then
+    if [[ -z $mail_transfer_output ]] ; then
         echo -e "\nAudit passed : Mail transfer agent is configured for local-only mode\n"
 
     else

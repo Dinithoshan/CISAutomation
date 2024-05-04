@@ -39,6 +39,7 @@ Flags:
     -m :Audits system maintenance.
     -m :onfigures system maintenance.
     -h :Displays this help message.
+    -z :Reports back a summary of all the current local audit findings
 
 
 

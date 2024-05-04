@@ -34,7 +34,7 @@ config_usb_storage
 # config_bootloader_pwd
 config_bootloader_config_permissions
 # config_single_user_auth
-config_aide
+# config_aide
 config_aslr
 config_file_sys_integrity_check
 config_prelink_not_installed
