@@ -517,21 +517,3 @@ RPC_config () {
 
     fi
 }
-
-nonessential_services_config () {
-
-    read -p "Enter the name of the package that needs to be removed (if no packages need to be removed, type 'none'): " package
-
-    if [ "$package" != "none" ]; then
-        sudo apt purge $package
-    else
-
-        sudo systemctl --now mask $package
-
-        if [[ -z $package ]]; then
-            echo -e "\nNo service name was given\n"
-            exit 1
-
-        fi
-    fi
-}

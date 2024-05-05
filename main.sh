@@ -12,6 +12,7 @@ RUN_ROLLBACK="./rollback-main.sh"
 INSTALLATION="./installation-main.sh"
 SYS_CONFIG_AUDIT='./system-maintenance-audit.sh'
 SYS_CONFIG_CONFIG='./system-maintenance-config.sh'
+OTHER_CONFIG='other-config.sh'
 
 
 # Defining functions to execute the scripts
@@ -114,13 +115,34 @@ function report_back() {
     echo 'Remote System '$cis_compliance'% Secure according to standards.'
 }
 
+function execute_other_scripts(){
+    while true; do
+    echo "WARNING: EXECUTING THESE SCRIPTS MAY AFFECT YOUR SYSTEM STABILITY! do you want to proceed?"
+    read $choice
+    case $choice in 
+        [yY])
+            bash "$OTHER_CONFIG"
+            break
+            ;;
+        [nN])
+            echo "Execution of script cancelled by user. Quitting..."
+            break
+            ;;
+        *)
+            echo "Invalid Input. Enter (Y/N)"
+            ;;
+    esac
+    done
+
+}
+
 # Check if the script is not being run as root
 if [ "$EUID" -ne 0 ]; then
     echo "Script is not running as root."
 else
     mkdir -p results
     # Process command line options
-    while getopts "lLiIsSnNmMhrRxz" opt; do
+    while getopts "lLiIsSnNmMhrRxzo" opt; do
         case $opt in
             l)
                 execute_log_audit >> 'results/log-audit-results.txt'
@@ -167,6 +189,9 @@ else
                 ;;
             z)
                 report_back
+                ;;
+            o)
+                execute_other_scripts
                 ;;
             \?)
                 echo "Invalid Option: -$OPTARG" >&2

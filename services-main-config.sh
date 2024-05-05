@@ -27,4 +27,3 @@ talk_client_config
 telnet_client_config
 LDAP_client_config
 RPC_config
-nonessential_services_config

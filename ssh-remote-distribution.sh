@@ -96,18 +96,18 @@ while getopts "iacrR" opt; do
             remote-set-rollback
             ;;
         a)
-            # remote-network-audit
+            remote-network-audit
             remote-logging-audit
-            # remote-initial-setup-audit
-            # remote-services-audit
-            # remote-system-maintenance-audit
+            remote-initial-setup-audit
+            remote-services-audit
+            remote-system-maintenance-audit
             ;;
         c)
-            # remote-network-config
-            remote-logging-config
-            # remote-initial-setup-config
-            # remote-services-config
-            # remote-system-maintenance-config
+            remote-network-config
+            # remote-logging-config
+            remote-initial-setup-config
+            remote-services-config
+            remote-system-maintenance-config
             ;;
         r)
             remote-report-back
