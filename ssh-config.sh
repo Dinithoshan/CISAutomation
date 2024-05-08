@@ -13,6 +13,26 @@ PATH_TO_LOCAL_DIRECTORY='/home/ubuntu/Desktop' #Local path where remotely execut
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##CONSTANTS
 
 #Constants that run functions
