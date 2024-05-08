@@ -26,7 +26,7 @@ Before Using the tool to harden security make sure that you run the installation
 
 
 ###IMPORTANT
-Resuts file will not be removed to allow users to look for a detailed overview of the findings
+Results file will not be removed to allow users to look for a detailed overview of the findings
 before executing another report please make sure to delete the old results file.
 ###
 
