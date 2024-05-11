@@ -86,7 +86,7 @@ function remote-report-back() {
     cis_compliance=$(awk "BEGIN {printf \"%.2f\", ($total_passed / $total_scripts) * 100}")
     echo 'Remote System '$cis_compliance'% Secure according to standards.'
 
-    # sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "cd /home/$USERNAME/CISBOT && sudo rm -r results"
+    sshpass -p $PASSWORD ssh -p $PORT $USERNAME@$IP "cd /home/$USERNAME/CISBOT && sudo rm -r results"
 }
 
 
